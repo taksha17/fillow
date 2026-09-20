@@ -1,0 +1,19 @@
+.env
+node_modules/
+reports/
+output/
+*.log
+.DS_Store
+.wrangler/
+cloudflare/.wrangler/
+cloudflare/.sync.sql
+cloudflare/.dev.vars
+
+# data/ is user-personal + generated (cover letters, tracker, TSV, DB, state) —
+# only the generic *.example.* copies are committed
+data/*
+!data/applications.example.md
+!data/blacklist.example.md
+!data/.gitkeep
+
+config/profile.yaml

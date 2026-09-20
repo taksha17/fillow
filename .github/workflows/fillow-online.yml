@@ -1,0 +1,70 @@
+# Online half only: discover + heuristic score/gate.
+# No Playwright, no Chromium, no Gmail, no NVIDIA key, no submit.
+# Local machine: fillow pull && fillow offline
+# Budget: ~5–15 min/day → well under 1000 Actions minutes/month. See HYBRID.md.
+
+name: fillow-online
+
+on:
+  schedule:
+    # 14:00 UTC ≈ 9:00 AM America/Chicago during CDT
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: fillow-online
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  discover-score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DRY_RUN: "true"
+      FILLLOW_SCORE_ONLY: "true"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install (skip Chromium)
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Profile fallback
+        run: |
+          if [ ! -f config/profile.yaml ]; then
+            cp config/profile.example.yaml config/profile.yaml
+            echo "using config/profile.example.yaml (commit profile.yaml on a private repo for your boards)"
+          fi
+
+      - name: Discover + score
+        run: node bin/fillow.mjs online
+
+      - name: Stage jobs.tsv
+        run: |
+          test -f data/jobs.tsv
+          mkdir -p "$RUNNER_TEMP/fillow-artifact"
+          cp data/jobs.tsv "$RUNNER_TEMP/fillow-artifact/jobs.tsv"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jobs-tsv
+          path: ${{ runner.temp }}/fillow-artifact/jobs.tsv
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 7

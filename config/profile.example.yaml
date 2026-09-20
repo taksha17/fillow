@@ -1,0 +1,118 @@
+# Copy to config/profile.yaml and fill in your facts.
+# Identity here is the only source of name / email / phone / passport / links.
+
+candidate:
+  first_name: Ada
+  last_name: Lovelace
+  email: you@gmail.com
+  phone: "555-555-0100"
+  linkedin: https://www.linkedin.com/in/you
+  github: https://github.com/you
+  location: "Austin, TX"  # Greenhouse applications search City, State, United States
+  work_authorization: "Authorized to work in the US"
+  requires_sponsorship: false
+  current_company: ""
+  years_experience: "3–4 years"
+  work_location_intent: "United States (remote OK)"
+  resume_path: resume.pdf
+  passport_country: "United States"
+  country_of_residence: "United States"
+  school: ""              # e.g. The University of Texas at Arlington
+  school_aliases: []      # extra spellings the ATS school typeahead might use; last fallback is Other
+  degree: ""              # e.g. Master of Science in Computer Science
+  school_location: ""     # e.g. Arlington, TX
+  graduation: ""          # e.g. May 2024
+  gender: ""              # Male / Female / blank = decline
+  hispanic: ""            # Yes / No / blank = decline
+  veteran: ""             # Yes / No / blank = decline
+
+# Facts only — Agent 2/3 will not invent schools, employers, or metrics.
+# Fill candidate.school / degree above to put Education on the Jake PDF and
+# Greenhouse school fields. Leave blank to skip those widgets.
+resume:
+  current_title: Software Engineer
+  education: []   # extra schools beyond candidate.school
+  experience:
+    - title: Software Engineer
+      company: Example Labs
+      location: Austin, TX
+      dates: Present
+      bullets:
+        - Ship production services and review take-home assessments
+  projects:
+    - name: Example Project
+      stack: TypeScript, React
+      dates: ""
+      bullets:
+        - Built a small full-stack tool used in interviews
+  skills:
+    languages: [TypeScript, Python, SQL]
+    frameworks: [React, Node.js]
+    tools: [Git, Docker]
+    libraries: [pandas]
+
+answer_preferences:
+  tone: optimistic
+  how_heard: Linkedin
+  eeo_default: "Prefer not to say"
+  always_yes:
+    - authorized to work
+  always_no:
+    - previously employed by
+    - relative working
+  claims:
+    general: >
+      See resume for production impact and stack.
+
+targets:
+  keywords:
+    - Software Engineer
+    - Machine Learning Engineer
+  exclude_keywords:
+    - unpaid
+    - internship
+  locations: []
+  remote_ok: true
+
+runtime:
+  dry_run: true
+  max_applies_per_run: 3
+  max_tailor_per_run: 12
+  enrich_profiles: false
+  min_match_score: 78
+  headless: false
+  apply_delay_seconds: 6
+  auto_submit: true
+  keep_browser_open: false
+  humanize_fills: true
+
+ats_filter: [ashby, greenhouse]   # boards Agent 1 scrapes
+use_mygreenhouse: false
+skip_aggregators: true
+
+ai:
+  provider: nvidia_nim
+  model: nvidia/nemotron-3.5-lightning-30b-a3b
+  max_tokens: 4096
+  temperature: 0.3
+
+gmail:
+  imap_user: you@gmail.com
+  app_password: ""
+  otp_regex: "^[0-9]{6}$|^[0-9]{4}$"
+
+job_boards:
+  primary:
+    - ashby
+    - greenhouse
+  fallback: []
+
+greenhouse_boards:
+  - stripe
+ashby_boards:
+  - anthropic
+lever_companies: []
+workday_boards: []
+
+dashboard:
+  title: "fillow"

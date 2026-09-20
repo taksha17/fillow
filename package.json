@@ -1,0 +1,52 @@
+{
+  "name": "fillow",
+  "version": "0.1.0",
+  "description": "Faster career-ops with end-to-end job application submission",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "fillow": "./bin/fillow.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "fillow": "node bin/fillow.mjs",
+    "doctor": "node doctor.mjs",
+    "gmail:check": "node scripts/gmail-check.mjs",
+    "start": "node run-workflow.mjs",
+    "online": "node scripts/online.mjs",
+    "offline": "node scripts/offline.mjs",
+    "pull": "node scripts/pull-jobs.mjs",
+    "scrape": "node agents/discover.mjs",
+    "evaluate": "node agents/evaluate-tailor.mjs",
+    "apply": "node agents/apply.mjs",
+    "track": "node agents/track.mjs",
+    "lint": "node scripts/check-syntax.mjs",
+    "test": "node --test tests/*.mjs",
+    "cf:setup": "node scripts/cf-setup.mjs",
+    "cf:dev": "wrangler dev --config cloudflare/wrangler.toml",
+    "cf:schema:local": "wrangler d1 execute fillow --config cloudflare/wrangler.toml --local --file=cloudflare/schema.sql --yes",
+    "cf:sync": "node scripts/sync-cloudflare.mjs",
+    "cf:deploy": "wrangler deploy --config cloudflare/wrangler.toml"
+  },
+  "keywords": [
+    "ai",
+    "job-search",
+    "automation",
+    "multi-agent",
+    "nim",
+    "career-ops",
+    "fillow"
+  ],
+  "author": "Taksha Thosani",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
+    "playwright": "^1.55.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.34.0"
+  }
+}

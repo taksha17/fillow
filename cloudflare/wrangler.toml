@@ -1,0 +1,11 @@
+name = "fillow"
+main = "src/worker.mjs"
+compatibility_date = "2026-09-19"
+workers_dev = true
+
+# Replace database_id after: npm run cf:setup
+# Local `wrangler dev` / `d1 execute --local` work with this placeholder.
+[[d1_databases]]
+binding = "DB"
+database_name = "fillow"
+database_id = "b68aa582-0e81-420f-8d1f-d6948289aa8f"
