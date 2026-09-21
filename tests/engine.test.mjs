@@ -217,7 +217,7 @@ test("heuristics fill residence country and employer from profile", () => {
       prefs,
       ["Yes, I intend to work remotely.", "No, I intend to work from an office location."]
     ),
-    "Yes, I intend to work remotely."
+    "United States (remote OK)"
   );
 });
 
