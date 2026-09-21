@@ -192,6 +192,7 @@ authoritative.
 - ✅ Batch PDF generation with concurrency control
 - ✅ Auto-submit with explicit safety gates
 - ✅ Local Cloudflare Worker dashboard + D1 (`cloudflare/`)
+- ✅ Dashboard logo (`fillow_logo.png`) in header
 - ⬜ Hosted Cloudflare Pages UI (React/Vite + TailwindCSS)
 - ⬜ Real-time dashboard updates (WebSocket)
 - ⬜ OAuth — Gmail/LinkedIn authentication

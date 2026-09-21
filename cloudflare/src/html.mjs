@@ -86,7 +86,7 @@ function filingRows(rows, resumeHref) {
       const company = href
         ? `<a href="${esc(href)}" rel="noopener">${esc(prettyCompany(r.company))}</a>`
         : esc(prettyCompany(r.company));
-      const resume = resumeHref ? resumeHref(r) : r.num ? `/api/resume/${Number(r.num)}` : "";
+      const resume = resumeHref ? resumeHref(r) : r.id ? `/api/resume/${Number(r.id)}` : "";
       return `<article class="row filing tone-${statusTone(r.status)}" data-filing>
         <div>
           <h3>${company}</h3>
@@ -162,6 +162,8 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
       padding-bottom: 22px;
     }
     .mark { margin: 0; font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 2rem; font-weight: 560; letter-spacing: -.03em; }
+    .logo { width: 48px; height: 48px; object-fit: contain; vertical-align: middle; margin-right: 12px; border-radius: 8px; }
+    .brand { display: flex; align-items: center; gap: 4px; }
     .sub { margin: 4px 0 0; color: var(--mute); font-size: .92rem; }
     .when { text-align: right; color: var(--mute); font-size: .85rem; }
     .when strong { display: block; color: var(--ink); font-weight: 500; }
@@ -234,7 +236,10 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
   <div class="wrap">
     <header class="top">
       <div>
-        <h1 class="mark">fillow</h1>
+        <div class="brand">
+          <img src="fillow_logo.png" alt="fillow logo" class="logo" onerror="this.style.display='none'" />
+          <h1 class="mark">fillow</h1>
+        </div>
         <p class="sub">One workflow. Four agents. Same run.</p>
       </div>
       <p class="when"><strong>${esc(today)}</strong>${hosted ? "Cloudflare + D1 · local files win" : "local files"}</p>
