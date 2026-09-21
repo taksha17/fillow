@@ -49,6 +49,17 @@ status (`applied` / `failed` / `review` / `dry_run`).
 
 ---
 
+## ⚖️ Usage & Legal Disclaimer
+
+fillow automates interactions with job boards and ATS platforms (Ashby, Greenhouse, Lever, Workday, etc.). You are responsible for complying with each platform's **Terms of Service**.
+
+- Provided **as-is** with no guarantee of application quality or outcomes.
+- **DRY_RUN=true** is the default and should remain enabled until you have reviewed a full run — nothing is submitted until then.
+- **Recommended limits:** keep `MAX_APPLIES_PER_RUN ≤ 3` and `APPLY_DELAY_S ≥ 6` unless you know exactly what you are doing. Aggressive settings can get your IP or account flagged by ATS providers.
+- Job-board autofill and OTP handling may improve over time, but these are the author's own patterns and may not work on every platform.
+
+---
+
 ## 🚀 Quickstart — your first run
 
 ```bash
@@ -118,6 +129,8 @@ After `npm link` (or `npx fillow`) the same commands are just
 
 Local files are always the source of truth. Cloudflare D1 never becomes
 authoritative.
+
+**Config file lookup**: the loader checks `config/profile.yaml` first, then falls back to a flat `config.yaml` at the repo root if the dedicated directory doesn't exist. For new setups, prefer `config/profile.yaml` — the `config.yaml` fallback is for people who want a flat layout.
 
 ---
 

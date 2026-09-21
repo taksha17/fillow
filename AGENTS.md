@@ -12,8 +12,9 @@ submit capabilities, built on top of career-ops's architecture and the working
 Fillow v1 system (`/media/taksha/New Volume/Taksha_AI_Application_Builder`).
 
 Read [PRD.md](PRD.md) for requirements, [ARCHITECTURE.md](ARCHITECTURE.md) for
-the system design, and [HYBRID.md](HYBRID.md) for the Actions / local split
-before writing any code.
+the system design, [HYBRID.md](HYBRID.md) for the Actions / local split, and
+[FILL_CAVEATS.md](FILL_CAVEATS.md) for cross-ATS form-fill gotchas before
+changing Agent 3.
 
 ## Source-of-Truth Boundary (CRITICAL)
 
@@ -83,12 +84,13 @@ Root stubs (`scrape-jobs.mjs`, `evaluate-tailor.mjs`, `apply-job.mjs`,
 `package.json` scripts point at `agents/`.
 
 **Still open:** NIM-verified scoring, Workday beyond the auth-gate fallback,
-Playwright Chromium install on this machine, resume file on disk. Agent 2 writes
-a 1-page Jake's Resume PDF (Times New Roman, per job) **only on the offline
-half** — never on GitHub Actions. Optional LinkedIn/GitHub enrich is off unless
-`ENRICH_PROFILES=true`. `DRY_RUN=true` until a run is reviewed. Hybrid is the
-default ops model: see [HYBRID.md](HYBRID.md). Keep Actions ≤ 1000 min/month
-(discover+score only; no hosted apply, no extra Track cron).
+Playwright Chromium install on this machine. Agent 2 writes a 1-page Jake's
+Resume PDF (Times New Roman, per job) **only on the offline half** — never on
+GitHub Actions. Tailoring fetches the Greenhouse JD when `jobs.tsv` has no
+description (TSV is score metadata only). Optional LinkedIn/GitHub enrich is
+off unless `ENRICH_PROFILES=true`. `DRY_RUN=true` until a run is reviewed.
+Hybrid is the default ops model: see [HYBRID.md](HYBRID.md). Keep Actions ≤
+1000 min/month (discover+score only; no hosted apply, no extra Track cron).
 
 ## Cloudflare (optional hosted dashboard + D1)
 

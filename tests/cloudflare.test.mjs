@@ -57,4 +57,12 @@ test("hosted dashboard html renders D1 rows", () => {
   );
   assert.match(withJobs, /1,270/);
   assert.match(withJobs, /Stripe/);
+  assert.match(withJobs, /Company \/ Role/);
+  assert.match(withJobs, /Location/);
+  assert.match(withJobs, /Match Score/);
+  assert.match(withJobs, /Pipeline Status/);
+  assert.match(withJobs, /Applied Date/);
+  assert.match(withJobs, /Current Status/);
+  assert.match(withJobs, /Tailored Resume/);
+  assert.match(withJobs, /Application Notes/);
 });

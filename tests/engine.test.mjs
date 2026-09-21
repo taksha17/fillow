@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { answerQuestions, heuristicAnswer, alignOptions } from "../lib/answer-engine.mjs";
+import { answerQuestions, heuristicAnswer, alignOptions, needsLlmAnswer } from "../lib/answer-engine.mjs";
 import { educationFromProfile } from "../lib/config.mjs";
 import { appendApplication, readTracker } from "../lib/tracker.mjs";
 import { scoreJob } from "../lib/score.mjs";
@@ -122,6 +122,48 @@ test("answerQuestions applies locks after LLM", async () => {
   assert.equal(answers["Do you opt-in to receive WhatsApp messages from Stripe Recruiting?"], "No");
 });
 
+test("NIM is skipped when profile or resume already has the answer", async () => {
+  let called = 0;
+  await answerQuestions({
+    questions: ["GitHub", "Are you authorized to work in the US?"],
+    candidate,
+    prefs,
+    optionsByQuestion: { "Are you authorized to work in the US?": ["Yes", "No"] },
+    llmChat: async () => {
+      called += 1;
+      return "{}";
+    },
+  });
+  assert.equal(called, 0);
+});
+
+test("NIM only receives questions with no profile or resume fact", async () => {
+  let asked = "";
+  const answers = await answerQuestions({
+    questions: ["GitHub", "Why do you want this role?"],
+    candidate: { ...candidate, education: [{ school: "UTA", degree: "MS CS" }], experience: [{ title: "Engineer", company: "Acme", dates: "2024", bullets: ["Shipped APIs"] }] },
+    job: { title: "SWE", company: "Acme" },
+    prefs: { ...prefs, claims: {} },
+    llmChat: async (_sys, user) => {
+      asked = user;
+      return JSON.stringify({ "Why do you want this role?": "Because of the ML platform." });
+    },
+  });
+  assert.match(asked, /Why do you want this role/);
+  assert.match(asked, /Unanswered questions/);
+  assert.match(asked, /UTA/);
+  assert.match(asked, /Shipped APIs/);
+  assert.doesNotMatch(asked, /"question": "GitHub"/);
+  assert.equal(answers.GitHub, "https://github.com/you");
+  assert.equal(answers["Why do you want this role?"], "Because of the ML platform.");
+});
+
+test("needsLlmAnswer treats resume placeholders as gaps", () => {
+  assert.equal(needsLlmAnswer("Yes"), false);
+  assert.equal(needsLlmAnswer(""), true);
+  assert.equal(needsLlmAnswer("Please see resume for details."), true);
+});
+
 test("tracker append is atomic and dedupes by url", () => {
   const dir = mkdtempSync(join(tmpdir(), "fillow-tracker-"));
   const path = join(dir, "applications.md");
@@ -136,6 +178,26 @@ test("tracker append is atomic and dedupes by url", () => {
 
 test("heuristics fill residence country and employer from profile", () => {
   assert.equal(heuristicAnswer("Please select the country where you currently reside.", candidate, {}, prefs), "United States");
+  assert.equal(
+    heuristicAnswer(
+      "Please select the country where you currently reside.",
+      candidate,
+      {},
+      prefs,
+      ["Australia", "Canada", "US", "Other"]
+    ),
+    "US"
+  );
+  assert.equal(
+    heuristicAnswer(
+      "Please select the country or countries you anticipate working in for the role",
+      candidate,
+      {},
+      prefs,
+      ["Australia", "Canada", "US", "Other"]
+    ),
+    "US"
+  );
   assert.equal(heuristicAnswer("Who is your current or previous employer?", candidate, {}, prefs), "Example LLC");
   assert.equal(heuristicAnswer("Do you opt-in to receive WhatsApp messages?", candidate, {}, prefs), "No");
   assert.equal(

@@ -80,11 +80,23 @@ test("scoreOption does not match Norway for No", () => {
   assert.ok(scoreOption("I don't wish to answer", "Prefer not to say") >= 90);
 });
 
+test("scoreOption does not match Christian Brothers for Other", () => {
+  assert.equal(scoreOption("Other", "Other"), 100);
+  assert.ok(scoreOption("Christian Brothers University", "Other") < 40);
+});
+
 test("pickApiOption maps Yes onto the remote-work Greenhouse string", () => {
   const opts = ["Yes, I intend to work remotely.", "No, I intend to work from an office location."];
   assert.equal(pickApiOption(opts, "Yes"), "Yes, I intend to work remotely.");
   assert.equal(pickApiOption(opts, "No"), "No, I intend to work from an office location.");
   assert.equal(pickApiOption(["United States", "Canada"], "United States"), "United States");
+});
+
+test("pickApiOption maps United States onto Stripe's US country option", () => {
+  const opts = ["Australia", "Canada", "India", "US", "United Kingdom", "Other"];
+  assert.equal(pickApiOption(opts, "United States"), "US");
+  assert.equal(pickApiOption(opts, "USA"), "US");
+  assert.equal(scoreOption("US", "United States"), 98);
 });
 
 test("pickDecline prefers the ATS decline string", () => {
@@ -121,6 +133,30 @@ test("schoolNameTries tries The-prefix then stripped then other schools then Oth
   assert.equal(tries.at(-1), "Other");
 });
 
+test("schoolNameTries greenhouse mode skips aliases and ends on Other", () => {
+  const tries = schoolNameTries(
+    {
+      school: "The University of Texas at Arlington",
+      education: [{ school: "Gujarat Technological University" }],
+    },
+    { greenhouse: true }
+  );
+  assert.equal(tries[0], "The University of Texas at Arlington");
+  assert.ok(tries.includes("University of Texas at Arlington"));
+  assert.ok(!tries.includes("Gujarat Technological University"));
+  assert.equal(tries.at(-1), "Other");
+  assert.ok(tries.length <= 3);
+});
+
+test("US does not score-match Australia", () => {
+  assert.equal(scoreOption("Australia", "US"), -1);
+  assert.equal(scoreOption("Australia", "United States"), -1);
+  assert.ok(scoreOption("US", "United States") >= 90);
+  const opts = ["Australia", "Belgium", "Canada", "India", "US", "United Kingdom"];
+  assert.equal(pickApiOption(opts, "United States"), "US");
+  assert.equal(pickApiOption(opts, "US"), "US");
+});
+
 test("gender Male does not match Female", () => {
   assert.equal(pickGenderOption(["Female", "Male", "Decline"], "Men"), "Male");
   assert.equal(pickApiOption(["Female", "Male"], "male"), "Male");
@@ -128,6 +164,7 @@ test("gender Male does not match Female", () => {
 
 test("veteran No maps to I am not a veteran", () => {
   assert.equal(pickVeteranOption(["I am a veteran", "I am not a veteran"], "No"), "I am not a veteran");
+  assert.equal(pickVeteranOption([], "No"), "I am not a protected veteran");
 });
 
 test("eeoAnswer uses profile facts before decline", () => {

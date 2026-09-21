@@ -55,31 +55,45 @@ function statusTone(status) {
 
 function jobRows(jobs) {
   if (!jobs.length) return `<p class="blank">No jobs in D1 yet. Run <code>npm start</code>.</p>`;
-  return `<div class="list">${jobs
-    .map((j) => {
+  return `<div class="list"><div class="job-table" role="table" aria-label="Discovered jobs">
+    <div class="job-heads" role="row">
+      <span role="columnheader">Company / Role</span>
+      <span role="columnheader">Location</span>
+      <span role="columnheader">ATS</span>
+      <span role="columnheader">Match Score</span>
+      <span role="columnheader">Pipeline Status</span>
+    </div>
+    ${jobs.map((j) => {
       const href = j.url || j.apply_url || "";
       const title = href
         ? `<a href="${esc(href)}" rel="noopener">${esc(j.title || "Untitled")}</a>`
         : esc(j.title || "Untitled");
-      return `<article class="row tone-${statusTone(j.status)}">
-        <div>
+      return `<article class="row job tone-${statusTone(j.status)}" role="row">
+        <div class="job-identity">
           <h3>${esc(prettyCompany(j.company))}</h3>
           <p>${title}</p>
         </div>
-        <div class="meta">
-          <span>${esc(j.location || "—")}</span>
-          <span>${esc(j.ats || "")}</span>
-          <span class="score">${esc(j.match_score || "—")}</span>
-          <span class="stamp">${esc(j.status || "discovered")}</span>
-        </div>
+        <span class="job-field">${esc(j.location || "—")}</span>
+        <span class="job-field">${esc(j.ats || "")}</span>
+        <span class="job-field score">${esc(j.match_score || "—")}</span>
+        <span class="job-field stamp">${esc(j.status || "discovered")}</span>
       </article>`;
-    })
-    .join("")}</div>`;
+    }).join("")}
+  </div></div>`;
 }
 
 function filingRows(rows, resumeHref) {
   if (!rows.length) return `<p class="blank">Nothing filed yet. Agent 3 writes here after apply; Agent 4 keeps the ledger.</p>`;
-  return `<div class="list">${[...rows]
+  return `<div class="list"><div class="filing-table" role="table" aria-label="Application tracker">
+    <div class="filing-heads" role="row">
+      <span role="columnheader">Company / Role</span>
+      <span role="columnheader">Applied Date</span>
+      <span role="columnheader">Match Score</span>
+      <span role="columnheader">Current Status</span>
+      <span role="columnheader">Tailored Resume</span>
+      <span role="columnheader">Application Notes</span>
+    </div>
+    ${[...rows]
     .reverse()
     .map((r) => {
       const href = r.url || "";
@@ -87,21 +101,20 @@ function filingRows(rows, resumeHref) {
         ? `<a href="${esc(href)}" rel="noopener">${esc(prettyCompany(r.company))}</a>`
         : esc(prettyCompany(r.company));
       const resume = resumeHref ? resumeHref(r) : r.id ? `/api/resume/${Number(r.id)}` : "";
-      return `<article class="row filing tone-${statusTone(r.status)}" data-filing>
-        <div>
+      return `<article class="row filing tone-${statusTone(r.status)}" data-filing role="row">
+        <div class="filing-identity">
           <h3>${company}</h3>
           <p>${esc(r.role)}</p>
         </div>
-        <div class="meta">
-          <time>${esc(fmtDate(r.date))}</time>
-          <span class="score">${esc(r.score || "—")}</span>
-          <span class="stamp">${esc(r.status)}</span>
-          ${resume ? `<a class="resume" href="${esc(resume)}" download rel="noopener">↓ resume</a>` : ""}
-        </div>
-        <p class="notes">${esc(r.notes)}</p>
+        <time class="filing-field">${esc(fmtDate(r.date))}</time>
+        <span class="filing-field score">${esc(r.score || "—")}</span>
+        <span class="filing-field stamp">${esc(r.status)}</span>
+        <div class="filing-field resume-cell">${resume ? `<a class="resume" href="${esc(resume)}" download rel="noopener">↓ resume</a>` : `<span class="empty">—</span>`}</div>
+        <p class="notes filing-notes">${esc(r.notes)}</p>
       </article>`;
     })
-    .join("")}</div>`;
+    .join("")}
+  </div></div>`;
 }
 
 export function dashboardHtml(rows, title = "fillow", extras = {}) {
@@ -206,7 +219,20 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
       display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(180px, .9fr); gap: 10px 24px;
       padding: 13px 0 13px 12px; border-bottom: 1px solid var(--line); border-left: 2px solid var(--line);
     }
-    .row.filing { grid-template-columns: minmax(0, 1.3fr) minmax(160px, .7fr) minmax(0, 1fr); }
+    .job-heads, .filing-heads {
+      display: grid; gap: 10px 24px; padding: 0 0 7px 12px;
+      color: var(--mute); font-size: .68rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+    }
+    .job-heads { grid-template-columns: minmax(0, 1.4fr) minmax(120px, .7fr) minmax(70px, .4fr) minmax(70px, .4fr) minmax(110px, .6fr); }
+    .row.job { grid-template-columns: minmax(0, 1.4fr) minmax(120px, .7fr) minmax(70px, .4fr) minmax(70px, .4fr) minmax(110px, .6fr); }
+    .filing-heads { grid-template-columns: minmax(0, 1.3fr) minmax(90px, .45fr) minmax(70px, .35fr) minmax(120px, .6fr) minmax(110px, .55fr) minmax(0, 1fr); }
+    .row.filing { grid-template-columns: minmax(0, 1.3fr) minmax(90px, .45fr) minmax(70px, .35fr) minmax(120px, .6fr) minmax(110px, .55fr) minmax(0, 1fr); }
+    .job-identity, .filing-identity, .job-field, .filing-field { min-width: 0; }
+    .job-field, .filing-field { display: flex; align-items: center; color: var(--mute); font-size: .82rem; }
+    .filing-notes { align-self: start; }
+    .empty { color: var(--mute); }
     .tone-sent { border-left-color: var(--gold); }
     .tone-live, .tone-offer, .tone-ready { border-left-color: var(--moss); }
     .tone-no { border-left-color: var(--rose); }
@@ -226,7 +252,8 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
     footer a { text-decoration: underline; text-underline-offset: 3px; }
     @media (max-width: 800px) {
       .wrap { padding: 20px 16px 48px; }
-      .pipe, .row, .row.filing { grid-template-columns: 1fr; }
+      .pipe, .row, .row.job, .row.filing { grid-template-columns: 1fr; }
+      .job-heads, .filing-heads { display: none; }
       .pipe a { border-right: 0; border-bottom: 1px solid var(--line); }
       .when { text-align: left; }
     }

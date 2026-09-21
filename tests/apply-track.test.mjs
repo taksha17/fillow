@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeMime, extractOtp, classifyReply, normalizeAppPassword } from "../lib/gmail.mjs";
+import { decodeMime, extractOtp, classifyReply, statusAdvances, normalizeAppPassword } from "../lib/gmail.mjs";
 import { detectAts, parseGreenhouseIds, greenhouseEmbedUrl } from "../lib/ats.mjs";
 import { confirmationText, spamFlagged, phoneDigits } from "../lib/browser.mjs";
 import { appendApplication, readTracker, updateApplication } from "../lib/tracker.mjs";
@@ -15,6 +15,8 @@ test("extractOtp finds greenhouse-style codes", () => {
   assert.equal(extractOtp("Your security code is 123456"), "123456");
   assert.equal(extractOtp("Your one-time code: 998877"), "998877");
   assert.equal(extractOtp("Your security code is 123456", "^[0-9]{6}$|^[0-9]{4}$"), "123456");
+  assert.equal(extractOtp("enter the 8-character code: AB12CD34", "^[0-9]{4,8}$|^[0-9A-Za-z]{8}$"), "AB12CD34");
+  assert.equal(extractOtp("Your verification code is 12345678"), "12345678");
   assert.equal(extractOtp("no code here"), null);
   assert.equal(normalizeAppPassword("abcd efgh ijkl mnop"), "abcdefghijklmnop");
 });
@@ -38,6 +40,35 @@ test("classifyReply maps recruiting language", () => {
   assert.equal(classifyReply("Update", "Unfortunately we will not be moving forward"), "rejected");
   assert.equal(classifyReply("Interview", "Please pick a slot on Calendly"), "interview");
   assert.equal(classifyReply("Offer", "We are pleased to offer you"), "offer");
+});
+
+test("classifyReply rejects OTP and security emails", () => {
+  assert.equal(classifyReply("Security code", "Your security code is 123456"), null);
+  assert.equal(classifyReply("Verification", "Your verification code is 654321"), null);
+  assert.equal(classifyReply("Security code for your application to Stripe", "Copy and paste this code"), null);
+  assert.equal(classifyReply("One-time password", "Your OTP is 123456"), null);
+});
+
+test("classifyReply under_review requires status keywords", () => {
+  assert.equal(classifyReply("Security code", "Security code for your application to Stripe"), null);
+  assert.equal(classifyReply("Update", "Just checking in on your application to Stripe", "Stripe"), "under_review");
+  assert.equal(classifyReply("Status", "We have an update on your Stripe application", "Stripe"), "under_review");
+  assert.equal(classifyReply("Hello", "Just saying hi from Stripe", "Stripe"), null);
+});
+
+test("statusAdvances only moves forward", () => {
+  assert.equal(statusAdvances("pending", "submitted"), true);
+  assert.equal(statusAdvances("submitted", "under_review"), true);
+  assert.equal(statusAdvances("under_review", "interview"), true);
+  assert.equal(statusAdvances("interview", "offer"), true);
+  assert.equal(statusAdvances("submitted", "rejected"), true);
+  assert.equal(statusAdvances("under_review", "submitted"), false);
+  assert.equal(statusAdvances("submitted", "interview"), true);
+  assert.equal(statusAdvances("applied", "submitted"), true);
+  assert.equal(statusAdvances("applied", "under_review"), true);
+  assert.equal(statusAdvances("submitted", "submitted"), false);
+  assert.equal(statusAdvances("pending", null), false);
+  assert.equal(statusAdvances("pending", "dry_run"), false);
 });
 
 test("detectAts and greenhouse embed url", () => {

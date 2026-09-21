@@ -103,7 +103,7 @@ ai:
 gmail:
   imap_user: you@gmail.com
   app_password: ""
-  otp_regex: "^[0-9]{6}$|^[0-9]{4}$"
+  otp_regex: "^[0-9]{4,8}$|^[0-9A-Za-z]{8}$"
 
 job_boards:
   primary:

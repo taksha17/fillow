@@ -64,6 +64,16 @@ const gh = spawnSync("gh", ["--version"], { encoding: "utf8" });
 check("gh CLI (fillow pull)", true, gh.status === 0 ? "installed — fillow pull can fetch Actions artifacts" : "optional — install https://cli.github.com/ to pull the online jobs.tsv");
 check("hybrid workflow", existsSync(`${PATHS.root}/.github/workflows/fillow-online.yml`), "discover+score on Actions; PDFs/apply/Gmail stay local");
 
+// rate-limit / etiquette warnings
+const maxApplies = Number(process.env.MAX_APPLIES_PER_RUN || "3");
+const applyDelay = Number(process.env.APPLY_DELAY_S || "6");
+if (maxApplies > 3) {
+  console.warn(`⚠️  MAX_APPLIES_PER_RUN=${maxApplies} exceeds recommended max of 3 — consider lowering to stay under ATS anti-spam radar`);
+}
+if (applyDelay < 6) {
+  console.warn(`⚠️  APPLY_DELAY_S=${applyDelay}s below recommended minimum of 6s — consider raising to be gentler on boards`);
+}
+
 try {
   await import("playwright");
   check("playwright", true, "importable (run npx playwright install chromium before live apply)");
