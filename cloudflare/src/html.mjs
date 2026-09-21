@@ -237,7 +237,7 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
     <header class="top">
       <div>
         <div class="brand">
-          <img src="fillow_logo.png" alt="fillow logo" class="logo" onerror="this.style.display='none'" />
+          <img src="/fillow_logo.png" alt="fillow logo" class="logo" onerror="this.style.display='none'" />
           <h1 class="mark">fillow</h1>
         </div>
         <p class="sub">One workflow. Four agents. Same run.</p>

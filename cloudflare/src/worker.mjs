@@ -70,7 +70,9 @@ export default {
     if (request.method === "GET" && url.pathname.startsWith("/api/resume/")) {
       const num = Number(url.pathname.slice("/api/resume/".length));
       if (!num) return json({ error: "invalid application number" }, 400);
-      const row = await env.DB.prepare("SELECT resume_md, company FROM applications WHERE id = ?").first(num);
+      const row = await env.DB.prepare(
+        "SELECT resume_md, company FROM applications WHERE id = " + num
+      ).first();
       if (!row || !row.resume_md) return json({ error: "no resume on file for this application" }, 404);
       const slug = String(row.company || "resume").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "resume";
       return new Response(row.resume_md, {

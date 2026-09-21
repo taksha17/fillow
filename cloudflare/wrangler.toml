@@ -3,6 +3,9 @@ main = "src/worker.mjs"
 compatibility_date = "2026-09-19"
 workers_dev = true
 
+[assets]
+directory = "public"
+
 # Replace database_id after: npm run cf:setup
 # Local `wrangler dev` / `d1 execute --local` work with this placeholder.
 [[d1_databases]]
