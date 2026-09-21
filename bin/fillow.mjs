@@ -16,6 +16,7 @@ export const HELP = `fillow — one CLI, four agents, hybrid by default
   fillow apply        Agent 3  Playwright fill / OTP / submit
   fillow track        Agent 4  tracker, Gmail watch, dashboard
   fillow doctor       environment check
+  fillow auth         platform auth matrix (NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, Supabase)
   fillow gmail        IMAP login (OTP + reply-watch)
   fillow lint         syntax check
   fillow test         node --test
@@ -38,6 +39,7 @@ const scripts = {
   offline: ["scripts/offline.mjs"],
   pull: ["scripts/pull-jobs.mjs"],
   doctor: ["doctor.mjs"],
+  auth: ["scripts/auth.mjs"],
   discover: ["agents/discover.mjs"],
   scrape: ["agents/discover.mjs"],
   evaluate: ["agents/evaluate-tailor.mjs"],
