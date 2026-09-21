@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS applications (
   report TEXT NOT NULL DEFAULT '',
   notes TEXT NOT NULL DEFAULT '',
   url TEXT NOT NULL DEFAULT '',
+  resume_md TEXT NOT NULL DEFAULT '',
   updated_at TEXT NOT NULL DEFAULT ''
 );
 

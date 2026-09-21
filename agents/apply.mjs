@@ -21,7 +21,7 @@ export async function applyJobs(jobs, cfg = loadConfig()) {
   const taken = pool.slice(0, cap);
   const results = [];
   const humanize = cfg.runtime.humanize_fills !== false;
-  const llmChat = makeLlmChat(cfg, { timeoutMs: 25000, maxTokens: 1800 });
+  const llmChat = makeLlmChat(cfg);
   const reviewMode = cfg.runtime.review_mode || !cfg.runtime.auto_submit;
   const pauseSeconds = cfg.runtime.pre_submit_pause_seconds ?? 4;
 

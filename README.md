@@ -36,7 +36,7 @@ Every layer wins over everything below it.
 | Station | Agent | Job | Co-built with |
 |---|---|---|---|
 | 🔎 **1 — Discover** | `agents/discover.mjs` | Public ATS APIs (Ashby, Greenhouse, Lever, Workday) · liveness gate · dedup · seed boards → `data/jobs.tsv` | **GLM 5.3-flash** (NVIDIA NIM + Qwen agent) |
-| 🎯 **2 — Evaluate & Tailor** | `agents/evaluate-tailor.mjs` | Heuristic score + NIM verification · legitimacy gate · tailored 1-page Jake's-format resume + cover letter per JD | **NVIDIA Nemotron 3 Ultra** (Kilo AI + Claude Code agent) |
+| 🎯 **2 — Evaluate & Tailor** | `agents/evaluate-tailor.mjs` | Semantic scoring (Jaccard similarity, company tier, job age) · NIM-verified legitimacy gate · LLM-rewritten resume bullets per JD · dynamic skill reordering · tailored resume PDF + cover letter per job (cached per company) | **NVIDIA Nemotron 3 Ultra** (Kilo AI + Claude Code agent) |
 | 📝 **3 — Prefill & Submit** | `agents/apply.mjs` | Playwright per-ATS fill · layered answer engine · Gmail IMAP OTP · auto-submit with gates | **Grok 4.6** (Cursor agent) |
 | 📊 **4 — Track & Dashboard** | `agents/track.mjs` | Canonical tracker · status ledger · Gmail reply-watch · dashboard | **Grok 4.6** (Cursor agent) |
 
@@ -58,12 +58,12 @@ Actions. Full write-up: [HYBRID.md](HYBRID.md).
 GitHub Actions  (cron 14:00 UTC ≈ 9:00 AM America/Chicago CDT)
   fillow online
     Agent 1   public ATS APIs → data/jobs.tsv
-    Agent 2a  score + MIN_MATCH_SCORE + Greenhouse location + legitimacy
+    Agent 2a  semantic score + MIN_MATCH_SCORE + Greenhouse location + legitimacy
     upload    jobs-tsv artifact
 
 this machine
   fillow pull && fillow offline
-    Agent 2b  1-page Jake's Resume PDF + cover letter (cached per job)
+    Agent 2b  semantic score + legitimacy gate · LLM-rewritten resume bullets · dynamic skill reorder · 1-page Jake's Resume PDF + cover letter (cached per company, batch-generated)
     Agent 3   prefill → layered answers → OTP → SUBMIT gates
     Agent 4   tracker → Gmail reply-watch → dashboard
     optional  fillow cf sync   (D1 is a copy, never canonical)
@@ -118,7 +118,7 @@ After `npm link` (or `npx fillow`) the same commands are just `fillow doctor`
 | `fillow offline` | Agent 2b + 3 + 4 — PDFs, apply, Gmail, track (this machine) |
 | `fillow run` | All four agents on this machine |
 | `fillow discover` | Agent 1 — public ATS APIs → `data/jobs.tsv` |
-| `fillow evaluate` | Agent 2 — score, legitimacy, reports (`--score-only` skips PDFs) |
+| `fillow evaluate` | Agent 2 — semantic score + legitimacy gate · LLM-rewritten bullets · skill reorder · resume PDF + cover letter (`--score-only` skips PDFs) |
 | `fillow apply` | Agent 3 — form fill, Gmail OTP, submit gates |
 | `fillow track` | Agent 4 — `data/applications.md`, reply-watch, dashboard |
 | `fillow doctor` | Setup check |
@@ -175,7 +175,7 @@ authoritative.
 | Piece | Model | Delivered through |
 |---|---|---|
 | Agent 1 — Discovery | GLM 5.3-flash | NVIDIA NIM + Qwen agent |
-| Agent 2 — Evaluate & Tailor | NVIDIA Nemotron 3 Ultra | Kilo AI + Claude Code agent |
+| Agent 2 — Evaluate & Tailor | NVIDIA Nemotron 3 Ultra | Kilo AI + Claude Code agent (semantic scoring, LLM bullet rewrite, skill reorder, company-grouped PDF generation) |
 | Agents 3 & 4 — Prefill & Submit, Track & Dashboard | Grok 4.6 | Cursor agent |
 | PRD & architecture | GLM 5.3 | NVIDIA NIM + Claude Code agent |
 
@@ -185,6 +185,11 @@ authoritative.
 
 - ✅ Unified four-agent pipeline (`fillow run` = full local workflow)
 - ✅ Hybrid: Actions discover+score, local PDFs/apply/Gmail, Cloudflare index
+- ✅ Semantic scoring (Jaccard similarity, company tier weighting, job age recency)
+- ✅ LLM-rewritten resume bullets per JD with template fallback
+- ✅ Dynamic skill reordering per job
+- ✅ Company-grouped PDF caching (one PDF per company, reused)
+- ✅ Batch PDF generation with concurrency control
 - ✅ Auto-submit with explicit safety gates
 - ✅ Local Cloudflare Worker dashboard + D1 (`cloudflare/`)
 - ⬜ Hosted Cloudflare Pages UI (React/Vite + TailwindCSS)

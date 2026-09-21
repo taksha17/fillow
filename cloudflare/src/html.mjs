@@ -77,7 +77,7 @@ function jobRows(jobs) {
     .join("")}</div>`;
 }
 
-function filingRows(rows) {
+function filingRows(rows, resumeHref) {
   if (!rows.length) return `<p class="blank">Nothing filed yet. Agent 3 writes here after apply; Agent 4 keeps the ledger.</p>`;
   return `<div class="list">${[...rows]
     .reverse()
@@ -86,6 +86,7 @@ function filingRows(rows) {
       const company = href
         ? `<a href="${esc(href)}" rel="noopener">${esc(prettyCompany(r.company))}</a>`
         : esc(prettyCompany(r.company));
+      const resume = resumeHref ? resumeHref(r) : r.num ? `/api/resume/${Number(r.num)}` : "";
       return `<article class="row filing tone-${statusTone(r.status)}" data-filing>
         <div>
           <h3>${company}</h3>
@@ -95,6 +96,7 @@ function filingRows(rows) {
           <time>${esc(fmtDate(r.date))}</time>
           <span class="score">${esc(r.score || "—")}</span>
           <span class="stamp">${esc(r.status)}</span>
+          ${resume ? `<a class="resume" href="${esc(resume)}" download rel="noopener">↓ resume</a>` : ""}
         </div>
         <p class="notes">${esc(r.notes)}</p>
       </article>`;
@@ -212,6 +214,7 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
     .stamp { letter-spacing: .08em; text-transform: uppercase; font-size: .68rem; color: var(--ink); }
     .score { font-variant-numeric: tabular-nums; }
     .notes { margin: 0; color: var(--mute); font-size: .85rem; overflow-wrap: anywhere; }
+    a.resume { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
     .blank { color: var(--mute); }
     footer {
       display: flex; justify-content: space-between; gap: 16px;
@@ -263,7 +266,7 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
       ${filingRows((() => {
         const applyRows = rows.filter((r) => /applied|submitted|dry_run|review|failed/i.test(r.status || ""));
         return applyRows.length ? applyRows : rows;
-      })())}
+      })(), extras.resumeHref)}
     </section>
 
     <section class="stage ${initial === "track" ? "on" : ""}" data-stage="track">
@@ -272,7 +275,7 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
         <h2>Filings</h2>
         <input data-filter type="search" placeholder="Find a company or role" aria-label="Filter filings"/>
       </div>
-      ${filingRows(rows)}
+      ${filingRows(rows, extras.resumeHref)}
     </section>
 
     <footer>

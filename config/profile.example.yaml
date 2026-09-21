@@ -95,6 +95,10 @@ ai:
   model: nvidia/nemotron-3.5-lightning-30b-a3b
   max_tokens: 4096
   temperature: 0.3
+  timeout_ms: 180000          # apply used to abort NIM at 25s
+  reasoning_budget: 1024      # Nemotron thinks by default; uncapped = hang
+  enable_thinking: true
+  retries: 1
 
 gmail:
   imap_user: you@gmail.com

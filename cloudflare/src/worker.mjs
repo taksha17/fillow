@@ -67,6 +67,21 @@ export default {
       return json({ jobs: results || [] });
     }
 
+    if (request.method === "GET" && url.pathname.startsWith("/api/resume/")) {
+      const num = Number(url.pathname.slice("/api/resume/".length));
+      if (!num) return json({ error: "invalid application number" }, 400);
+      const row = await env.DB.prepare("SELECT resume_md, company FROM applications WHERE id = ?").first(num);
+      if (!row || !row.resume_md) return json({ error: "no resume on file for this application" }, 404);
+      const slug = String(row.company || "resume").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "resume";
+      return new Response(row.resume_md, {
+        headers: {
+          "content-type": "text/markdown; charset=utf-8",
+          "content-disposition": `attachment; filename="resume-${slug}.md"`,
+          "cache-control": "no-store",
+        },
+      });
+    }
+
     if (request.method === "POST" && url.pathname === "/api/sync") {
       const expected = env.FILLLOW_SYNC_TOKEN;
       const got = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -82,12 +97,12 @@ export default {
       const now = new Date().toISOString();
       for (const row of apps) {
         await env.DB.prepare(
-          `INSERT INTO applications (id, date, company, role, score, status, pdf, report, notes, url, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO applications (id, date, company, role, score, status, pdf, report, notes, url, resume_md, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              date=excluded.date, company=excluded.company, role=excluded.role, score=excluded.score,
              status=excluded.status, pdf=excluded.pdf, report=excluded.report, notes=excluded.notes,
-             url=excluded.url, updated_at=excluded.updated_at`
+             url=excluded.url, resume_md=excluded.resume_md, updated_at=excluded.updated_at`
         )
           .bind(
             Number(row.num || row.id) || null,
@@ -100,6 +115,7 @@ export default {
             row.report || "",
             row.notes || "",
             row.url || "",
+            row.resume_md || "",
             now
           )
           .run();

@@ -96,20 +96,30 @@ test("candidate.school and degree are the education fields Agent 3 reads", () =>
 
 test("answerQuestions applies locks after LLM", async () => {
   const answers = await answerQuestions({
-    questions: ["Passport country?", "Are you authorized to work in the US?"],
-    candidate,
+    questions: [
+      "Passport country?",
+      "Are you authorized to work in the US?",
+      "Please select the country where you currently reside.",
+      "Do you opt-in to receive WhatsApp messages from Stripe Recruiting?",
+    ],
+    candidate: { ...candidate, greenhouse_location: "Austin, Texas, United States" },
     job: { title: "SWE", company: "Acme" },
     prefs,
     optionsByQuestion: {
       "Are you authorized to work in the US?": ["Yes", "No"],
+      "Do you opt-in to receive WhatsApp messages from Stripe Recruiting?": ["Yes", "No"],
     },
     llmChat: async () => JSON.stringify({
       "Passport country?": "France",
       "Are you authorized to work in the US?": "No",
+      "Please select the country where you currently reside.": "US",
+      "Do you opt-in to receive WhatsApp messages from Stripe Recruiting?": "Yes",
     }),
   });
   assert.equal(answers["Passport country?"], "India");
   assert.equal(answers["Are you authorized to work in the US?"], "Yes");
+  assert.equal(answers["Please select the country where you currently reside."], "United States");
+  assert.equal(answers["Do you opt-in to receive WhatsApp messages from Stripe Recruiting?"], "No");
 });
 
 test("tracker append is atomic and dedupes by url", () => {
