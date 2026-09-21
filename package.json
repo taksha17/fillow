@@ -28,7 +28,8 @@
     "cf:dev": "wrangler dev --config cloudflare/wrangler.toml",
     "cf:schema:local": "wrangler d1 execute fillow --config cloudflare/wrangler.toml --local --file=cloudflare/schema.sql --yes",
     "cf:sync": "node scripts/sync-cloudflare.mjs",
-    "cf:deploy": "wrangler deploy --config cloudflare/wrangler.toml"
+    "cf:deploy": "wrangler deploy --config cloudflare/wrangler.toml",
+    "site:deploy": "wrangler deploy --assets ./site --name fillow-site --compatibility-date 2026-09-19"
   },
   "keywords": [
     "ai",

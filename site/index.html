@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>fillow — the agentic AI job-application crew</title>
+<meta name="description" content="Four AI agents run your entire job-application pipeline: discover, evaluate & tailor, prefill & submit, track & dashboard. Local-first, zero-token discovery, Cloudflare-hosted dashboard."/>
+<link rel="icon" type="image/png" href="fillow_logo.png"/>
+<style>
+:root {
+  --void:#0d0c0a; --panel:#161411; --panel2:#1c1915; --line:#2e2a24; --text:#ece6da; --mute:#8a8172; --gold:#c9a24b; --gold2:#e2c47c;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: radial-gradient(1100px 460px at 50% -10%, #201b12 0%, var(--void) 55%) var(--void);
+  color: var(--text);
+  font: 400 17px/1.7 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--gold2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 22px; }
+
+header.hero { padding: 84px 0 44px; }
+.logo { width: 110px; height: 110px; border-radius: 26px; box-shadow: 0 18px 48px rgba(0,0,0,.5); display:block; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--gold); margin: 26px 0 10px; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.6rem); line-height: 1.06; letter-spacing: -0.02em; font-weight: 800; }
+h1 em { font-style: normal; color: var(--gold2); }
+.sub { color: var(--mute); font-size: 1.12rem; max-width: 620px; margin-top: 18px; }
+.ctas { display:flex; flex-wrap:wrap; gap:12px; margin-top: 30px; }
+.btn { display:inline-flex; align-items:center; gap:8px; padding: 12px 20px; border-radius: 10px; font: 650 14.5px/1 var(--mono); border: 1px solid var(--line); background: var(--panel); color: var(--text); transition: border-color .15s, transform .15s; }
+.btn:hover { border-color: var(--gold); transform: translateY(-1px); text-decoration: none; }
+.btn.gold { background: linear-gradient(180deg, var(--gold2), var(--gold)); color: #20180a; border: none; }
+
+.trust { display:flex; flex-wrap:wrap; gap:10px; margin-top: 34px; }
+.chip { font: 600 12.5px/1 var(--mono); color: var(--mute); border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; background: rgba(255,255,255,.02); }
+
+section { padding: 52px 0; border-top: 1px solid var(--line); }
+h2 { font-size: 1.65rem; letter-spacing: -0.01em; margin-bottom: 8px; }
+.sub2 { color: var(--mute); margin-bottom: 26px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card { background: linear-gradient(180deg, var(--panel), var(--panel2)); border: 1px solid var(--line); border-radius: 14px; padding: 20px; transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.card .num { font: 700 12px/1 var(--mono); color: var(--gold); letter-spacing: .18em; }
+.card h3 { font-size: 1.06rem; margin: 10px 0 6px; }
+.card p { color: var(--mute); font-size: .94rem; }
+
+.flow { font: 400 13px/1.9 var(--mono); white-space: pre; overflow-x: auto; background: #0a0908; border: 1px solid var(--line); border-radius: 14px; padding: 22px; color: #c9bfa9; }
+.flow b { color: var(--gold2); font-weight: 700; }
+
+.steps { display:grid; gap: 0; counter-reset: s; }
+.step { display:flex; gap: 16px; padding: 16px 0; border-bottom: 1px dashed var(--line); }
+.step:last-child { border-bottom: none; }
+.step::before { counter-increment: s; content: counter(s); flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--gold); color: var(--gold2); font: 700 15px/34px var(--mono); text-align:center; }
+.step .body code, .codeblock { font: 500 13px/1.6 var(--mono); }
+.step .body { color: var(--mute); font-size: .95rem; }
+.step .body strong { color: var(--text); }
+.step .body code { background: #0a0908; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; color: var(--gold2); }
+
+.codeblock { display:block; background:#0a0908; border:1px solid var(--line); border-radius:12px; padding:18px 20px; color:#d8cfba; overflow-x:auto; margin-top:14px; white-space:pre; }
+.codeblock .c { color:#6d6555; } .codeblock .g { color: var(--gold2); }
+
+.credit { font-size: .93rem; color: var(--mute); }
+.credit td { padding: 8px 12px 8px 0; vertical-align: top; }
+.credit td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
+
+footer { padding: 36px 0 56px; border-top: 1px solid var(--line); color: var(--mute); font-size: .86rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <img class="logo" src="fillow_logo.png" alt="fillow logo"/>
+  <div class="eyebrow">agentic AI · local-first · noncommercial</div>
+  <h1>Your job search,<br/>run by <em>four agents</em>.</h1>
+  <p class="sub">fillow is an agentic AI pipeline that discovers jobs on Ashby, Greenhouse, Lever &amp; Workday, scores and tailors a one-page resume per posting, pre-fills ATS forms, and tracks everything — with safety gates a human would insist on. DRY_RUN until you say otherwise.</p>
+  <div class="ctas">
+    <a class="btn gold" href="https://github.com/taksha17/fillow">★ GitHub repo</a>
+    <a class="btn" href="#quickstart">⚡ Quickstart</a>
+    <a class="btn" href="#crew">🤖 Meet the crew</a>
+  </div>
+  <div class="trust">
+    <span class="chip">Node 18+ · ESM</span>
+    <span class="chip">Playwright</span>
+    <span class="chip">NVIDIA NIM (primary LLM)</span>
+    <span class="chip">zero-token discovery</span>
+    <span class="chip">Jake's Resume format</span>
+    <span class="chip">~1–1:30 min / application</span>
+  </div>
+</header>
+
+<section id="crew">
+  <h2>Meet the crew</h2>
+  <p class="sub2">Four purpose-built agents. A failing board or job never blocks the batch.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="num">AGENT 1</div>
+      <h3>🔎 Discover</h3>
+      <p>Public ATS APIs (no tokens), liveness gate that never loses a real job to a bot-challenge, dedup, seed boards → <code>data/jobs.tsv</code>.</p>
+    </div>
+    <div class="card">
+      <div class="num">AGENT 2</div>
+      <h3>🎯 Evaluate &amp; Tailor</h3>
+      <p>Heuristic score + legitimacy gate, then LLM-rewritten bullets into a one-page, Times&nbsp;New&nbsp;Roman, justified Jake's-format PDF per JD. Cached per job.</p>
+    </div>
+    <div class="card">
+      <div class="num">AGENT 3</div>
+      <h3>📝 Prefill &amp; Submit</h3>
+      <p>Playwright form fill with a layered answer engine (profile-locked facts → force-lists → claims → NIM). Gmail IMAP pulls one-time codes automatically.</p>
+    </div>
+    <div class="card">
+      <div class="num">AGENT 4</div>
+      <h3>📊 Track &amp; Dashboard</h3>
+      <p>Canonical markdown tracker, append-only status ledger, Gmail reply-watch, and a Cloudflare Workers + D1 dashboard you can share privately.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <h2>How a run works</h2>
+  <p class="sub2">Hybrid by default: discovery scores free in GitHub Actions; PDFs, apply, and Gmail run on your machine.</p>
+  <div class="flow"><b>GitHub Actions</b>   (cron — free tier friendly)
+  <b>fillow online</b>   Agent 1 scrape → Agent 2a score/gate → jobs.tsv artifact
+
+<b>your machine</b>
+  <b>fillow offline</b>  Agent 2b PDFs → Agent 3 apply (gates on) → Agent 4 track + reply-watch
+  <b>fillow cf sync</b>  optional — D1 is a copy, never canonical
+
+<b>all-local fallback</b>: <b>fillow run</b></div>
+</section>
+
+<section id="gates">
+  <h2>The gates</h2>
+  <p class="sub2">Anti-spam pacing is a mitigation, not a setting.</p>
+  <div class="grid">
+    <div class="card"><h3>🧪 DRY_RUN default</h3><p>Nothing is submitted until you have reviewed a run. <code>review_mode</code> fills the form and leaves the browser open.</p></div>
+    <div class="card"><h3>❤️ Liveness gate</h3><p>Dead postings never cost evaluation time — and a bot challenge or 429 is never mistaken for "expired."</p></div>
+    <div class="card"><h3>⚖️ Legitimacy gate</h3><p>Reposts, stale postings, and suspicious patterns land as report-only. Never auto-submitted.</p></div>
+    <div class="card"><h3>🚫 Blacklist</h3><p><code>data/blacklist.md</code> is a gate, not a score signal. Respected by discovery and apply alike.</p></div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub2">From clone to first reviewed run.</p>
+  <div class="steps">
+    <div class="step"><div class="body"><strong>Clone &amp; install</strong> — <code>git clone https://github.com/taksha17/fillow.git && cd fillow && npm install</code></div></div>
+    <div class="step"><div class="body"><strong>Configure</strong> — copy <code>config/profile.example.yaml</code> and <code>.env.example</code>, add your identity + <code>NVIDIA_API_KEY</code> (and Gmail app password for OTP).</div></div>
+    <div class="step"><div class="body"><strong>Check connections</strong> — <code>fillow auth</code> prints a live matrix for NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, and Supabase.</div></div>
+    <div class="step"><div class="body"><strong>First run</strong> — <code>fillow run</code> with <code>DRY_RUN=true</code>. Review the tracker + dashboard, then flip the flag.</div></div>
+    <div class="step"><div class="body"><strong>Share the dashboard</strong> (optional) — <code>npm run cf:setup</code> → Workers + D1 hosted dashboard.</div></div>
+  </div>
+  <div class="codeblock"><span class="c"># the essentials</span>
+npm run evaluate      <span class="c"># score + tailor PDFs (agent 1+2)</span>
+npx playwright install chromium   <span class="c"># once, before live apply</span>
+fillow run            <span class="c"># full pipeline, DRY_RUN by default</span>
+fillow auth           <span class="c"># verify every integration at once</span></div>
+</section>
+
+<section id="credits">
+  <h2>Credits</h2>
+  <table class="credit">
+    <tr><td>Lineage</td><td><a href="https://github.com/career-ops-hq/career-ops">career-ops</a> (evaluation &amp; tracking discipline) · Fillow v1 (the author's Python predecessor)</td></tr>
+    <tr><td>Agent 1</td><td>GLM 5.3-flash — NVIDIA NIM + Qwen agent</td></tr>
+    <tr><td>Agent 2</td><td>NVIDIA Nemotron 3 Ultra — Kilo AI + Claude Code agent</td></tr>
+    <tr><td>Agents 3 &amp; 4</td><td>Grok 4.6 — Cursor agent</td></tr>
+    <tr><td>PRD &amp; architecture</td><td>GLM 5.3 — NVIDIA NIM + Claude Code agent</td></tr>
+  </table>
+</section>
+
+<footer>
+  <p>fillow is source-available under <a href="https://github.com/taksha17/fillow/blob/main/LICENSE">PolyForm Noncommercial 1.0.0</a> — personal use allowed, commercial use is not. This page and the dashboard are served by Cloudflare (Pages + Workers + D1).</p>
+</footer>
+
+</div>
+</body>
+</html>
