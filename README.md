@@ -1,9 +1,11 @@
 # ⚡ fillow
 
+<p align="center">
+  <img src="fillow_logo.png" alt="fillow logo" width="160"/>
+</p>
+
 **Your AI-powered job-application crew.** Run locally, sync to Cloudflare, never
 spam.
-
-[![fillow]()](){#fillow-logo}
 
 > **Four agents** — discover → evaluate & tailor → prefill & submit → track & dashboard  
 > **~1–1:30 min** per application · **DRY_RUN** by default · **Hybrid** (Actions +
@@ -184,8 +186,3 @@ This is source‑available, not OSI "open source" (those definitions require com
 - [AGENTS.md](AGENTS.md) — conventions for people and coding agents
 - [PRD.md](PRD.md) — requirements
 - [CLOUDFLARE.md](CLOUDFLARE.md) — optional hosted dashboard + D1
-
----
-
-{#fillow-logo}
-![fillow logo]()
