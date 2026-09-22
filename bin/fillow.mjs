@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ROOT } from "../lib/paths.mjs";
+import { parseProgressOptions } from "../lib/progress.mjs";
 
 export const HELP = `fillow — one CLI, four agents, hybrid by default
 
@@ -16,6 +17,8 @@ export const HELP = `fillow — one CLI, four agents, hybrid by default
   fillow apply        Agent 3  Playwright fill / OTP / submit
   fillow track        Agent 4  tracker, Gmail watch, dashboard
   fillow doctor       environment check
+  fillow setup        onboarding wizard — profile checklist, board setup (--boards saves the Greenhouse session)
+  fillow enrich       Agent 2 sub-agent — pull GitHub/LinkedIn into resume data (--force fresh, 24h cache)
   fillow auth         platform auth matrix (NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, Supabase)
   fillow gmail        IMAP login (OTP + reply-watch)
   fillow lint         syntax check
@@ -40,6 +43,8 @@ const scripts = {
   pull: ["scripts/pull-jobs.mjs"],
   doctor: ["doctor.mjs"],
   auth: ["scripts/auth.mjs"],
+  setup: ["scripts/setup.mjs"],
+  enrich: ["scripts/enrich.mjs"],
   discover: ["agents/discover.mjs"],
   scrape: ["agents/discover.mjs"],
   evaluate: ["agents/evaluate-tailor.mjs"],

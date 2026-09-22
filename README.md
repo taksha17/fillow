@@ -102,6 +102,9 @@ After `npm link` (or `npx fillow`) the same commands are just
 | `fillow apply` | Agent 3 — form fill, Gmail OTP, submit gates | You’re ready to apply |
 | `fillow track` | Agent 4 — tracker, reply‑watch, dashboard | You want status + email watch |
 | `fillow doctor` | Setup check | First run, or after env changes |
+| `fillow setup` | Onboarding wizard — profile checklist + one-time board session | After cloning, before first apply |
+| `fillow enrich` | Pull GitHub/LinkedIn into resume data (opt-in, 24h cache) | When you want richer tailored resumes |
+| `fillow auth` | Platform auth matrix (NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, Supabase) | Verify integrations after .env edits |
 | `fillow gmail` | Prove Gmail IMAP (app password) | Before running apply/track |
 | `fillow cf setup` | Optional: hosted dashboard + D1 | You want a shareable URL |
 

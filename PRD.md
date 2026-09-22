@@ -50,9 +50,14 @@ is the all-local fallback.
 - **Legitimacy gate** before expensive work (career-ops concept: reposting
   signals, posting age, salary transparency → suspicious postings are
   report-only, never auto-submitted).
-- Generates a **tailored resume PDF per JD** (LLM-optimized, cached per job) and
-  a cover letter draft. Resume generation constraints (user decisions,
-  2026-09-19):
+- **Tailored resume PDF generation:** Sub-agents (user decision, 2026-09-21):
+  1. **Onboarding** (`fillow setup` + `fillow setup --boards`) — one-time profile
+     checklist and the MyGreenhouse session; Ashby/Lever/Workday have no unified
+     accounts, so their per-posting fills happen at apply time.
+  2. **Enrichment** (`fillow enrich`) — public GitHub/LinkedIn evidence for
+     richer tailoring, kept opt-in (`enrich_profiles`) with a 24h cache.
+  3. **Resume builder** — final sub-agent, renders the ruleset below per job.
+- Resume generation constraints (user decisions, 2026-09-19):
   1. **One page maximum** — never spill onto a second page.
   2. **Tailored per job** — every JD gets its own resume; no shared/generic PDF.
   3. Font is always **Times New Roman**; text size is malleable/adaptive to fit.
