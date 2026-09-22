@@ -175,7 +175,7 @@ export function dashboardHtml(rows, title = "fillow", extras = {}) {
       padding-bottom: 22px;
     }
     .mark { margin: 0; font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 2rem; font-weight: 560; letter-spacing: -.03em; }
-    .logo { width: 48px; height: 48px; object-fit: contain; vertical-align: middle; margin-right: 12px; border-radius: 8px; }
+    .logo { width: 48px; height: 48px; object-fit: contain; vertical-align: middle; margin-right: 12px; border-radius: 8px; filter: brightness(0) invert(87%) sepia(0.42) saturate(3.5) hue-rotate(-8deg) opacity(0.92); }
     .brand { display: flex; align-items: center; gap: 4px; }
     .sub { margin: 4px 0 0; color: var(--mute); font-size: .92rem; }
     .when { text-align: right; color: var(--mute); font-size: .85rem; }
