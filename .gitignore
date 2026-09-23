@@ -17,3 +17,4 @@ data/*
 !data/.gitkeep
 
 config/profile.yaml
+.kilo/
