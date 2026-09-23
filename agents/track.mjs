@@ -6,40 +6,44 @@ import { PATHS } from "../lib/paths.mjs";
 import { pushSyncHttp, syncPayload } from "../lib/cloudflare-sync.mjs";
 import { runAgentCli } from "../lib/progress.mjs";
 
-async function optionalSupabaseSync(cfg, rows, metrics) {
-  if (!cfg.secrets.supabase_url || !cfg.secrets.supabase_anon_key) return false;
-  const url = `${cfg.secrets.supabase_url.replace(/\/$/, "")}/rest/v1/dashboard_metrics`;
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        apikey: cfg.secrets.supabase_anon_key,
-        Authorization: `Bearer ${cfg.secrets.supabase_anon_key}`,
-        "Content-Type": "application/json",
-        Prefer: "resolution=merge-duplicates",
-      },
-      body: JSON.stringify({
-        captured_at: new Date().toISOString(),
-        total: metrics.total,
-        by_status: metrics.byStatus,
-        conversion_rate: metrics.conversion_rate,
-        rows: rows.length,
-      }),
-    });
-    if (!res.ok) {
-      console.warn(`  Supabase sync HTTP ${res.status} (local files remain canonical)`);
-      return false;
+async function optionalSupabaseSync(cfg, rows, metrics, emit = null) {
+    const log = emit ? (message, data = {}) => emit("log", { message, ...data }) : console.log;
+    const warn = emit ? (message, data = {}) => emit("warn", { message, ...data }) : console.warn;
+  
+    if (!cfg.secrets.supabase_url || !cfg.secrets.supabase_anon_key) return false;
+    const url = `${cfg.secrets.supabase_url.replace(/\/$/, "")}/rest/v1/dashboard_metrics`;
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                apikey: cfg.secrets.supabase_anon_key,
+                Authorization: `Bearer ${cfg.secrets.supabase_anon_key}`,
+                "Content-Type": "application/json",
+                Prefer: "resolution=merge-duplicates",
+            },
+            body: JSON.stringify({
+                captured_at: new Date().toISOString(),
+                total: metrics.total,
+                by_status: metrics.byStatus,
+                conversion_rate: metrics.conversion_rate,
+                rows: rows.length,
+            }),
+        });
+        if (!res.ok) {
+            warn(`  Supabase sync HTTP ${res.status} (local files remain canonical)`);
+            return false;
+        }
+        return true;
+    } catch (err) {
+        warn("  Supabase sync failed (local files remain canonical):", err.message);
+        return false;
     }
-    return true;
-  } catch (err) {
-    console.warn("  Supabase sync failed (local files remain canonical):", err.message);
-    return false;
-  }
 }
 
 export async function trackDashboard(results = [], cfg = loadConfig(), opts = {}) {
-  const emit = opts.emit || null;
-  const log = emit ? (message, data = {}) => emit("log", { message, ...data }) : console.log;
+    const emit = opts.emit || null;
+    const log = emit ? (message, data = {}) => emit("log", { message, ...data }) : console.log;
+    const warn = emit ? (message, data = {}) => emit("warn", { message, ...data }) : console.warn;
 
   if (emit) emit("phase.start", { phase: "track", label: "Track applications", total: 4 });
 
@@ -72,17 +76,17 @@ export async function trackDashboard(results = [], cfg = loadConfig(), opts = {}
   const dash = writeDashboard(rows, cfg.dashboard?.title || "fillow — Application Dashboard");
   if (emit) emit("item.done", { phase: "track", item: "Dashboard", count: rows.length });
 
-  if (emit) emit("item.start", { phase: "track", item: "Sync" });
-  await optionalSupabaseSync(cfg, rows, metrics);
-  if (cfg.secrets.fillow_sync_url && cfg.secrets.fillow_sync_token) {
-    const cf = await pushSyncHttp(syncPayload(), {
-      url: cfg.secrets.fillow_sync_url,
-      token: cfg.secrets.fillow_sync_token,
-    });
-    if (cf.ok) log("   Cloudflare D1 sync ok");
-    else if (!cf.skipped) console.warn(`   Cloudflare D1 sync failed: ${cf.status || cf.reason}`);
-  }
-  if (emit) emit("item.done", { phase: "track", item: "Sync" });
+if (emit) emit("item.start", { phase: "track", item: "Sync" });
+    await optionalSupabaseSync(cfg, rows, metrics, emit);
+    if (cfg.secrets.fillow_sync_url && cfg.secrets.fillow_sync_token) {
+        const cf = await pushSyncHttp(syncPayload(), {
+            url: cfg.secrets.fillow_sync_url,
+            token: cfg.secrets.fillow_sync_token,
+        });
+        if (cf.ok) log("   Cloudflare D1 sync ok");
+        else if (!cf.skipped) warn(`   Cloudflare D1 sync failed: ${cf.status || cf.reason}`);
+    }
+    if (emit) emit("item.done", { phase: "track", item: "Sync" });
 
   if (emit) emit("phase.complete", { phase: "track", total: 4, summary: `${recorded.length} recorded, ${replyUpdates.length} reply updates` });
   log(`📊 Tracker ${PATHS.applications}: ${metrics.total} rows`);
@@ -98,7 +102,8 @@ if (isCli) {
     agent: "track",
     run: async (emit) => trackDashboard([], loadConfig(), { emit }),
     summarize: (result) => `${result.recorded.length} recorded, ${result.replyUpdates.length} reply updates`,
-  }).catch(() => {
+  }).catch((err) => {
+    console.error(`  track failed: ${err?.stack || err}`);
     process.exitCode = 1;
   });
 }

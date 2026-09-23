@@ -15,7 +15,7 @@ async function runFullWorkflow(emit) {
   dashboard.updateDashboard();
   
   // Update dashboard with agent start
-  dashboard.updateAgent('discover', { status: 'running', jobs: 0, errors: 0 });
+  dashboard.updateAgent('discover', { status: 'running', jobs: 0, errors: 0, engine: cfg.runtime.discover_engine || 'api' });
   dashboard.logAgent('discover', 'Starting job discovery...');
   
   try {
@@ -42,7 +42,7 @@ async function runFullWorkflow(emit) {
     throw err;
   }
   
-  dashboard.updateAgent('apply', { status: 'running', jobs: 0, errors: 0 });
+  dashboard.updateAgent('apply', { status: 'running', jobs: 0, errors: 0, engine: cfg.runtime.apply_engine || 'playwright' });
   dashboard.logAgent('apply', 'Starting application process...');
   
   try {

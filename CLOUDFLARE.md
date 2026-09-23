@@ -61,6 +61,46 @@ after each local run. Bulk job rows go through `npm run cf:sync` (D1 execute),
 which stays inside the free write budget. Do **not** point GitHub Actions at
 `/api/sync` — that HTTP path only sends 50 job rows (Workers CPU).
 
+## 3a. Run Agent 1 from the dashboard ("Discover now")
+
+The Discover tab has a gold **Discover now** button: the Worker itself fetches
+your public ATS boards (Greenhouse / Ashby / Lever / Workday CCX) and upserts
+results straight into D1 — no Actions run needed. Browser-session sources
+(MyGreenhouse search, logged-in Workday portals) stay CLI-only; Workers cannot
+run your browser.
+
+- `fillow cf sync` pushes your `profile.yaml` boards + target filters into the
+  dashboard's "Boards & filters" form (stored in the D1 `settings` table).
+- The first button click asks for your `FILLLOW_SYNC_TOKEN` (kept in
+  localStorage); every run stays token-gated server-side.
+- Each run caps at 150 upserts and skips liveness checks (Workers Free
+  subrequest limits). The full pipeline (liveness + scoring) still runs via
+  local `fillow discover` or the daily Actions cron (`fillow cron`).
+
+## 3b. Multi-user (Supabase Auth)
+
+The Worker carries a full JWT auth layer (`lib/jwt-verify.mjs` — RS256 via
+Supabase's JWKS, zero dependencies):
+
+- **Unconfigured:** with `SUPABASE_URL` empty the Worker stays in single-user
+  mode for the CLI — anonymous reads and the `FILLLOW_SYNC_TOKEN` path share
+  the `local` default user.
+- **Configured:** the dashboard becomes a closed multi-user product. Anonymous
+  visitors are redirected to `/auth/login` and `/api/*` returns 401 — nobody
+  sees another user's data. Sign-up (email/password + GitHub/Google OAuth)
+  drops each user into their own empty workspace; every D1 query is filtered
+  by the JWT's `sub`. The legacy sync-token CLI path keeps working for
+  trusted machine clients.
+- Sign in/out from the dashboard header; `GET /auth/me` for machine clients;
+  `POST /auth/session { access_token }` to exchange a Supabase token for the
+  cookie; Bearer JWTs also accepted on `/api/*`.
+
+Supabase project setup (free tier): create a project at supabase.com, enable
+Email + GitHub + Google providers under Authentication → Providers, add
+`https://fillow.<subdomain>.workers.dev/auth/callback` to the redirect URLs,
+then set the two Worker variables. D1 stays primary; Supabase is auth (and the
+optional secondary sync target).
+
 ## Local (no account)
 
 ```bash

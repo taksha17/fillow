@@ -56,6 +56,7 @@ node bin/fillow.mjs discover   # Agent 1  (npm run scrape)
 node bin/fillow.mjs evaluate   # Agent 2  (--score-only skips PDFs)
 node bin/fillow.mjs apply      # Agent 3
 node bin/fillow.mjs track      # Agent 4
+node bin/fillow.mjs cron       # 1-click daily schedule: status | enable | disable | run
 node bin/fillow.mjs doctor
 node bin/fillow.mjs gmail
 node bin/fillow.mjs cf setup   # optional hosted dashboard + D1
@@ -98,9 +99,9 @@ Exported entry points (the full OSS surface):
 
 | Module | Exports |
 |---|---|
-| `agents/discover.mjs` | `scrapeJobs(cfg, emit)` · `matchesTargets(job, targets)` · `livenessVerdict(liveness)` |
+| `agents/discover.mjs` | `scrapeJobs(cfg, emit)` · `matchesTargets(job, targets)` · `livenessVerdict(liveness)` · `pickDiscoverEngine(cfg)` |
 | `agents/evaluate-tailor.mjs` | `evaluateTailor(cfg, opts)` · `scoreOnlyRequested(argv, env)` |
-| `agents/apply.mjs` | `applyJobs(jobs, cfg)` |
+| `agents/apply.mjs` | `applyJobs(jobs, cfg)` · `pickApplyEngine(job, cfg)` |
 | `agents/track.mjs` | `trackDashboard(results, cfg)` |
 | `agents/discover-mygreenhouse.mjs` | `discoverMyGreenhouse(cfg, opts)` |
 | `agents/evaluate-mygreenhouse.mjs` | `evaluateMyGreenhouse(cfg, opts)` |
@@ -123,9 +124,9 @@ Contract rules for external drivers:
 ## Layout (as of 2026-09-20)
 
 ```
-agents/discover.mjs          # Agent 1 — public ATS APIs → data/jobs.tsv
+agents/discover.mjs          # Agent 1 — public ATS APIs → data/jobs.tsv; optional Fillow Browser source (runtime.discover_engine: bsk → adds MyGreenhouse logged-in search, merged into the same pipeline)
 agents/evaluate-tailor.mjs   # Agent 2 — 2a score/gate; 2b Jake PDFs (--score-only)
-agents/apply.mjs             # Agent 3 — Playwright fill / OTP / submit gates
+agents/apply.mjs             # Agent 3 — Playwright fill / OTP / submit gates; optional Fillow Browser engine (runtime.apply_engine: bsk → Greenhouse-family jobs via logged-in Chromium, others fall back to Playwright)
 agents/track.mjs             # Agent 4 — tracker + Gmail watch + output/dashboard.html
 scripts/online.mjs           # discover + 2a (GitHub Actions half)
 scripts/offline.mjs          # 2b + apply + track (this machine)
@@ -133,6 +134,7 @@ scripts/pull-jobs.mjs        # gh run download → data/jobs.tsv
 .github/workflows/fillow-online.yml
 providers/                   # ashby, greenhouse, lever, liveness, http
 lib/                         # config, answer-engine, tracker, gmail, browser, form-fill
+skills/fillow-browser/       # vendored Fillow Browser Skill (bsk CLI) — Agent 3 optional engine docs
 config/profile.yaml          # candidate + behavior (source of identity facts)
 tests/                       # node --test
 HYBRID.md                    # Actions vs local vs Cloudflare

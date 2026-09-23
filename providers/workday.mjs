@@ -1,7 +1,11 @@
 import { fetchJson } from "./http.mjs";
 
 export async function fetchWorkdayBoard(careerHost) {
-  const host = String(careerHost || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  // Accept bare hosts or portal URLs ("toyota.wd503.myworkdayjobs.com/TMNA") — CCX only needs the host.
+  const host = String(careerHost || "")
+    .replace(/^https?:\/\//, "")
+    .split("/")[0]
+    .replace(/\/+$/, "");
   if (!host) return [];
   const res = await fetchJson(`https://${host}/ccx/api/jobboard/v1/jobs`, {
     params: { limit: 200 },

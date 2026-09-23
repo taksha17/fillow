@@ -30,26 +30,27 @@ function parseArgs(argv) {
 }
 
 export async function discoverMyGreenhouse(cfg = loadConfig(), opts = {}) {
-  const queries = opts.queries?.length
-    ? opts.queries
-    : (cfg.targets?.keywords || []).slice(0, 6).map(String);
-  if (!queries.length) queries.push("Software Engineer", "Machine Learning Engineer");
+    const queries = opts.queries?.length
+        ? opts.queries
+        : (cfg.targets?.keywords || []).slice(0, 6).map(String);
+    if (!queries.length) queries.push("Software Engineer", "Machine Learning Engineer");
 
-  console.log(`MyGreenhouse discover via BrowserSkill (${queries.length} queries)`);
-  const jobs = await withSession(async (sessionId) => {
-    await pause(500);
-    return scrapeMyGreenhouseQueries(sessionId, queries, { limitPerQuery: opts.limit || 30 });
-  });
+    const log = (message, data = {}) => console.log(message, data);
+    log(`MyGreenhouse discover via BrowserSkill (${queries.length} queries)`);
+    const jobs = await withSession(async (sessionId) => {
+        await pause(500);
+        return scrapeMyGreenhouseQueries(sessionId, queries, { limitPerQuery: opts.limit || 30 });
+    });
 
-  const filtered = jobs.filter(
-    (j) => !isBlacklisted(j.company) && matchesTargets(j, cfg.targets || {}) && isUsJobLocation(j)
-  );
-  const droppedLoc = jobs.length - jobs.filter((j) => isUsJobLocation(j)).length;
-  const written = upsertJobs(filtered);
-  console.log(
-    `  scraped=${jobs.length} kept=${filtered.length} (dropped_non_us≈${droppedLoc}) added=${written.added} total=${written.total}`
-  );
-  return filtered;
+    const filtered = jobs.filter(
+        (j) => !isBlacklisted(j.company) && matchesTargets(j, cfg.targets || {}) && isUsJobLocation(j)
+    );
+    const droppedLoc = jobs.length - jobs.filter((j) => isUsJobLocation(j)).length;
+    const written = upsertJobs(filtered);
+    log(
+        `  scraped=${jobs.length} kept=${filtered.length} (dropped_non_us≈${droppedLoc}) added=${written.added} total=${written.total}`
+    );
+    return filtered;
 }
 
 const isCli = process.argv[1]?.endsWith("discover-mygreenhouse.mjs");

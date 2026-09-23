@@ -58,13 +58,19 @@ resume:
 
 answer_preferences:
   tone: optimistic
-  how_heard: Linkedin
+  how_heard: LinkedIn
   eeo_default: "Prefer not to say"
   always_yes:
     - authorized to work
+    - authorized to lawfully work
+    - office 3 days
+    - willing to relocate
   always_no:
     - previously employed by
     - relative working
+    - restrict your ability
+  # Optional curated screening (salary / export-control) — see profile.yaml
+  # salary_range: "$120,000–$149,999"
   claims:
     general: >
       See resume for production impact and stack.
@@ -78,6 +84,7 @@ targets:
     - internship
   locations: []
   remote_ok: true
+  posted_within_days: 30   # drop postings confidently older than N days (unreadable dates kept)
 
 runtime:
   dry_run: true
@@ -88,6 +95,8 @@ runtime:
   headless: false
   apply_delay_seconds: 6
   auto_submit: true
+  apply_engine: playwright  # playwright (default) | bsk — Fillow Browser fills Greenhouse-family jobs in your logged-in Chromium
+  discover_engine: api      # api (default) | bsk — adds MyGreenhouse logged-in search (bsk) on top of public ATS APIs
   keep_browser_open: false
   humanize_fills: true
 
@@ -117,11 +126,25 @@ job_boards:
   fallback: []
 
 greenhouse_boards:
-  - stripe
+  - stripe          # verified live 2026-09-23
+  - datadog
+  - mongodb
+  - figma
+  - gitlab
+  - discord
+  - databricks
+  - brex
+  - robinhood
+  - asana
+  - vercel
 ashby_boards:
-  - anthropic
-lever_companies: []
-workday_boards: []
+  - anthropic       # verified live 2026-09-23
+  - ramp
+  - notion
+  - linear
+  - perplexity
+lever_companies: []   # Lever public postings API is mostly retired — keep for known-live Lever boards
+workday_boards: []    # portal URLs, scraped via Fillow Browser (discover_engine: bsk) — e.g. toyota.wd503.myworkdayjobs.com/TMNA
 
 dashboard:
   title: "fillow"

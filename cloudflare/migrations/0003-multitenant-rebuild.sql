@@ -1,8 +1,18 @@
--- fillow D1 schema (Cloudflare Workers Free / D1 Free)
--- Local files remain canonical. D1 is an additive hosted index.
--- Multi-tenant: all tables scoped by user_id (Supabase Auth UUID)
+-- 0003: rebuild the data tables to the multi-tenant (user_id-scoped) shape.
+-- D1 rows are derived data — local files stay canonical and `fillow cf:sync`
+-- rebuilds them — so drop+recreate is the safe path for deployments that
+-- still carry the pre-multi-tenant tables (CREATE TABLE IF NOT EXISTS in
+-- schema.sql cannot alter an existing table).
+-- Run remotely with:
+--   npx wrangler d1 execute fillow --remote --file=cloudflare/migrations/0003-multitenant-rebuild.sql --config cloudflare/wrangler.toml -y
 
-CREATE TABLE IF NOT EXISTS applications (
+DROP TABLE IF EXISTS applications;
+DROP TABLE IF EXISTS job_postings;
+DROP TABLE IF EXISTS dashboard_metrics;
+DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS user_profiles;
+
+CREATE TABLE applications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL,
   date TEXT NOT NULL DEFAULT '',
@@ -19,12 +29,12 @@ CREATE TABLE IF NOT EXISTS applications (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS applications_url_user ON applications(user_id, url) WHERE url != '';
-CREATE INDEX IF NOT EXISTS applications_status ON applications(status);
-CREATE INDEX IF NOT EXISTS applications_date ON applications(date);
-CREATE INDEX IF NOT EXISTS applications_user ON applications(user_id);
+CREATE UNIQUE INDEX applications_url_user ON applications(user_id, url) WHERE url != '';
+CREATE INDEX applications_status ON applications(status);
+CREATE INDEX applications_date ON applications(date);
+CREATE INDEX applications_user ON applications(user_id);
 
-CREATE TABLE IF NOT EXISTS job_postings (
+CREATE TABLE job_postings (
   source TEXT NOT NULL,
   external_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
@@ -39,7 +49,7 @@ CREATE TABLE IF NOT EXISTS job_postings (
   PRIMARY KEY (user_id, source, external_id)
 );
 
-CREATE TABLE IF NOT EXISTS dashboard_metrics (
+CREATE TABLE dashboard_metrics (
   captured_at TEXT NOT NULL,
   user_id TEXT NOT NULL,
   total INTEGER NOT NULL DEFAULT 0,
@@ -48,13 +58,13 @@ CREATE TABLE IF NOT EXISTS dashboard_metrics (
   PRIMARY KEY (user_id, captured_at)
 );
 
-CREATE TABLE IF NOT EXISTS user_profiles (
+CREATE TABLE user_profiles (
   user_id TEXT PRIMARY KEY,
   profile_yaml TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE settings (
   key TEXT NOT NULL,
   user_id TEXT NOT NULL,
   value TEXT NOT NULL DEFAULT '{}',

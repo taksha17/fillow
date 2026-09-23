@@ -20,7 +20,8 @@ if (isCli) {
     agent: "evaluate",
     run: async (emit) => evaluateMyGreenhouse(undefined, { scoreOnly: scoreOnlyRequested(), emit }),
     summarize: (jobs) => `${jobs.length} jobs evaluated (mgh lane)`,
-  }).catch(() => {
+  }).catch((err) => {
+    console.error(`  evaluate-mygreenhouse failed: ${err?.stack || err}`);
     process.exitCode = 1;
   });
 }

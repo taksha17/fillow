@@ -14,7 +14,7 @@
     "fillow": "node bin/fillow.mjs",
     "doctor": "node doctor.mjs",
     "gmail:check": "node scripts/gmail-check.mjs",
-    "start": "node run-workflow.mjs",
+    "start": "node scripts/run-workflow.mjs",
     "online": "node scripts/online.mjs",
     "offline": "node scripts/offline.mjs",
     "pull": "node scripts/pull-jobs.mjs",
@@ -43,10 +43,10 @@
   "author": "Taksha Thosani",
   "license": "PolyForm-Noncommercial-1.0.0",
   "dependencies": {
+    "chalk": "^5.6.2",
     "dotenv": "^16.4.5",
     "js-yaml": "^4.1.0",
-    "playwright": "^1.55.0",
-    "chalk": "^5.3.0"
+    "playwright": "^1.55.0"
   },
   "devDependencies": {
     "wrangler": "^4.34.0"

@@ -29,6 +29,7 @@ export const HELP = `fillow — one CLI, four agents, hybrid by default
   fillow enrich       Agent 2 sub-agent — pull GitHub/LinkedIn into resume data (--force fresh, 24h cache)
   fillow auth         platform auth matrix (NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, Supabase)
   fillow gmail        IMAP login (OTP + reply-watch)
+  fillow cron         1-click daily discover schedule (status | enable | disable | run)
   fillow lint         syntax check
   fillow test         node --test
   fillow cf setup     optional Workers + D1 hosting
@@ -60,6 +61,7 @@ const scripts = {
   apply: ["agents/apply.mjs"],
   track: ["agents/track.mjs"],
   gmail: ["scripts/gmail-check.mjs"],
+  cron: ["scripts/cron.mjs"],
   lint: ["scripts/check-syntax.mjs"],
 };
 

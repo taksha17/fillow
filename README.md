@@ -4,12 +4,25 @@
   <img src="fillow_logo.png" alt="fillow logo" width="160"/>
 </p>
 
-**Your AI-powered job-application crew.** Run locally, sync to Cloudflare, never
-spam.
+**Your AI-powered job‑application crew.** Run locally, sync to Cloudflare,
+never spam.
 
 > **Four agents** — discover → evaluate & tailor → prefill & submit → track & dashboard  
-> **~1–1:30 min** per application · **DRY_RUN** by default · **Hybrid** (Actions +
-> local + Cloudflare index) · **zero-token discovery** · **Jake's Resume format**
+> **~1–1:30 min** per application · **DRY_RUN** by default · **Hybrid** (Actions +
+> local + Cloudflare index) · **zero‑token discovery** · **Jake’s Resume format**
+
+<!-- Badges row -->
+<p align="center">
+  <a href="https://github.com/taksha17/fillow/actions?query=branch%3Amain+status%3Asuccess">
+    <img alt="Build status" src="https://github.com/taksha17/fillow/workflows/fillow-online/badge.svg?branch=main&style=flat-square"/>
+  </a>
+  <a href="https://www.npmjs.com/package/fillow">
+    <img alt="npm version" src="https://img.shields.io/npm/v/fillow?color=%23cb3837&style=flat-square"/>
+  </a>
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-brightgreen?style=flat-square"/>
+  </a>
+</p>
 
 ---
 

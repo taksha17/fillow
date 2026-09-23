@@ -12,3 +12,9 @@ directory = "public"
 binding = "DB"
 database_name = "fillow"
 database_id = "b68aa582-0e81-420f-8d1f-d6948289aa8f"
+
+# Multi-user (Supabase Auth). Set both via encrypted secrets, NOT [vars] —
+# a plain [vars] entry of the same name overrides the secret on deploy:
+#   grep "^SUPABASE_URL=" .env | cut -d= -f2 | npx wrangler secret put SUPABASE_URL --config cloudflare/wrangler.toml
+#   grep "^SUPABASE_ANON_KEY=" .env | cut -d= -f2 | npx wrangler secret put SUPABASE_ANON_KEY --config cloudflare/wrangler.toml
+# Local dev reads them from cloudflare/.dev.vars.
