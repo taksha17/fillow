@@ -9,6 +9,8 @@ candidate:
   linkedin: https://www.linkedin.com/in/you
   github: https://github.com/you
   location: "Austin, TX"  # Greenhouse applications search City, State, United States
+  zip_code: ""            # e.g. 78701 — required by some Greenhouse forms
+  office_preference: "any"  # any | or a city/team string for office/team questions
   work_authorization: "Authorized to work in the US"
   requires_sponsorship: false
   current_company: ""
@@ -27,6 +29,9 @@ candidate:
   veteran: ""             # Yes / No / blank = decline
 
 # Facts only — Agent 2/3 will not invent schools, employers, or metrics.
+# Put the FULL Jake source here (multiple roles, metrics, projects). Agent 2
+# selects JD-relevant bullets/roles and optionally rewrites wording — it cannot
+# invent content that is missing from this block.
 # Fill candidate.school / degree above to put Education on the Jake PDF and
 # Greenhouse school fields. Leave blank to skip those widgets.
 resume:

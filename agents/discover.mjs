@@ -7,8 +7,14 @@ import { fetchGreenhouseBoard } from "../providers/greenhouse.mjs";
 import { fetchLeverCompany } from "../providers/lever.mjs";
 import { fetchWorkdayBoard } from "../providers/workday.mjs";
 import { sleep } from "../providers/http.mjs";
+import { runAgentCli } from "../lib/progress.mjs";
 
 const DEAD_REASONS = new Set(["http_404", "http_410", "expired_copy"]);
+const noop = () => {};
+
+function jobId(job) {
+  return `${job.source || "job"}:${job.external_id || job.url || ""}`;
+}
 
 const BOARD_FETCHERS = {
   greenhouse: { items: (cfg) => cfg.greenhouse_boards, fetcher: fetchGreenhouseBoard },
@@ -32,44 +38,67 @@ export function matchesTargets(job, targets) {
   return keywords.some((k) => hay.includes(k.toLowerCase()));
 }
 
-async function runBoards(label, items, fetcher, delayMs) {
+async function runBoards(label, items, fetcher, delayMs, emit = null) {
   const out = [];
-  for (const item of items) {
+  const total = items.length;
+  if (emit) emit("phase.start", { label: `${label} boards`, total });
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index];
+    if (emit) emit("item.start", { item: String(item), current: index, total });
     try {
       const batch = await fetcher(item);
-      console.log(`  ${label}/${item}: ${batch.length}`);
+      if (emit) {
+        emit("item.done", { item: String(item), count: batch.length, current: index + 1, total });
+        emit("item.update", { label: `${label} boards`, current: index + 1, total });
+      } else {
+        console.log(`  ${label}/${item}: ${batch.length}`);
+      }
       out.push(...batch);
     } catch (err) {
-      console.warn(`  ${label}/${item} failed: ${err.message}`);
+      if (emit) {
+        emit("item.error", { item: String(item), message: err.message, current: index + 1, total });
+      } else {
+        console.warn(`  ${label}/${item} failed: ${err.message}`);
+      }
     }
     if (delayMs) await sleep(delayMs);
   }
+  if (emit) emit("phase.complete", { label: `${label} boards`, total });
   return out;
 }
 
-async function checkLivenessBatch(jobs, concurrency = 6) {
+async function checkLivenessBatch(jobs, concurrency = 6, emit = null) {
   const results = new Map();
   let index = 0;
+  if (emit) emit("phase.start", { label: "Liveness checks", total: jobs.length });
   async function worker() {
     while (index < jobs.length) {
       const job = jobs[index++];
-      results.set(job, await checkLiveness(job.apply_url || job.url));
+      const liveness = await checkLiveness(job.apply_url || job.url);
+      results.set(job, liveness);
+      if (emit) {
+        emit("item.done", { item: jobId(job), current: index, total: jobs.length });
+        emit("item.update", { label: "Liveness checks", current: index, total: jobs.length });
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, worker));
+  if (emit) emit("phase.complete", { label: "Liveness checks", total: jobs.length });
   return results;
 }
 
-export async function scrapeJobs(cfg = loadConfig()) {
+export async function scrapeJobs(cfg = loadConfig(), emit = null) {
+  const log = emit ? (message, data = {}) => emit("log", { message, ...data }) : console.log;
   const ats = new Set(cfg.runtime.ats_filter || ["ashby", "greenhouse"]);
   const delayMs = Math.round((cfg.runtime.request_delay_seconds || 1.2) * 1000);
   const blacklist = loadBlacklist();
   const jobs = [];
 
+  if (emit) emit("phase.start", { label: "Discovery", total: 4 });
   for (const board of ["greenhouse", "ashby", "lever", "workday"]) {
     if (!ats.has(board)) continue;
     const { items, fetcher } = BOARD_FETCHERS[board];
-    jobs.push(...(await runBoards(board, items(cfg), fetcher, delayMs)));
+    jobs.push(...(await runBoards(board, items(cfg), fetcher, delayMs, emit)));
   }
 
   const existing = new Set(readJobs().map((j) => `${j.source}:${j.external_id}`.toLowerCase()));
@@ -84,7 +113,7 @@ export async function scrapeJobs(cfg = loadConfig()) {
 
   const onTarget = unique.filter((job) => !isBlacklisted(job.company, blacklist) && matchesTargets(job, cfg.targets));
 
-  const livenessByJob = await checkLivenessBatch(onTarget);
+  const livenessByJob = await checkLivenessBatch(onTarget, 6, emit);
   const alive = [];
   let expired = 0;
   let uncertain = 0;
@@ -99,13 +128,18 @@ export async function scrapeJobs(cfg = loadConfig()) {
   }
 
   const result = upsertJobs(alive);
-  console.log(`📡 Discovery: ${jobs.length} fetched, ${unique.length} new, ${alive.length} on-target (dropped ${expired} expired, ${uncertain} uncertain-kept), ${result.added} recorded`);
+  log(`📡 Discovery: ${jobs.length} fetched, ${unique.length} new, ${alive.length} on-target (dropped ${expired} expired, ${uncertain} uncertain-kept), ${result.added} recorded`);
+  if (emit) emit("phase.complete", { label: "Discovery", total: 4 });
   return alive;
 }
 
-if (process.argv[1]?.endsWith("discover.mjs")) {
-  scrapeJobs().catch((err) => {
-    console.error(err);
-    process.exit(1);
+const isCli = process.argv[1]?.endsWith("discover.mjs");
+if (isCli) {
+  runAgentCli({
+    agent: "discover",
+    run: async (emit) => scrapeJobs(loadConfig(), emit),
+    summarize: (jobs) => `${jobs.length} jobs discovered`,
+  }).catch(() => {
+    process.exitCode = 1;
   });
 }

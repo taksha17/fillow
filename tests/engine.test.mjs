@@ -41,6 +41,41 @@ test("always_yes / always_no force lists", () => {
   assert.equal(heuristicAnswer("Were you previously employed by this company?", candidate, {}, prefs), "No");
 });
 
+test("without-sponsorship auth is No when requires_sponsorship", () => {
+  assert.equal(
+    heuristicAnswer(
+      "Are you authorized to work lawfully in the United States for Blend without company sponsorship?",
+      candidate,
+      {},
+      prefs,
+      ["Yes", "No"]
+    ),
+    "No"
+  );
+});
+
+test("state / years / SF office heuristics", () => {
+  const c = { ...candidate, location: "Plano, TX" };
+  assert.match(
+    heuristicAnswer("State you will be working from", c, {}, prefs),
+    /Texas|TX/i
+  );
+  assert.match(
+    heuristicAnswer("How many years of industry experience do you have?", c, {}, prefs),
+    /3/
+  );
+  assert.equal(
+    heuristicAnswer(
+      "Are you currently 1) based in San Francisco Bay Area/New York City and 2) willing to come into the SF or NYC Airtable office 2-3x per week?",
+      c,
+      {},
+      prefs,
+      ["Yes", "No"]
+    ),
+    "No"
+  );
+});
+
 test("option alignment copies ATS strings", () => {
   const aligned = alignOptions(
     { Q: "yes" },
@@ -232,4 +267,60 @@ test("scoreJob rewards title keyword hits", () => {
 test("blacklist matches punctuation-insensitively", () => {
   assert.equal(isBlacklisted("Acme Corp", ["Acme Corp"]), true);
   assert.equal(isBlacklisted("Other", ["Acme Corp"]), false);
+});
+
+test("GitLab sponsorship does not pick an EU visa for a US applicant", () => {
+  const opts = [
+    "No",
+    "Yes, Netherlands Highly Skilled Migrant Visa",
+    "Yes, Ireland Highly Skilled Worker Visa",
+    "Yes, EU Blue Card",
+    "Yes, USMCA Professional (TN) Visa (USA)",
+    "Yes, F-1 Visa OPT (USA)",
+  ];
+  const ans = heuristicAnswer(
+    "Will you now or in the future require sponsorship for a visa to remain in your current location?",
+    candidate,
+    {},
+    prefs,
+    opts
+  );
+  assert.match(ans, /F-1 Visa OPT|USMCA/i);
+  assert.doesNotMatch(ans, /Netherlands|Ireland|EU Blue/i);
+});
+
+test("GitLab Poland/UK location is No", () => {
+  assert.equal(
+    heuristicAnswer("Are you currently location in either Poland or the UK?", candidate, {}, prefs, ["Yes", "No"]),
+    "No"
+  );
+});
+
+test("Anduril export controls pick none of the above for non-US-person", () => {
+  const opts = [
+    "A United States citizen or national",
+    "A person lawfully admitted for permanent residence of the United States (i.e., “Green Card” holder)",
+    "None of the above",
+  ];
+  assert.equal(
+    heuristicAnswer("EXPORT CONTROLS - This position requires access to information and technology that is subject to US export controls", candidate, {}, prefs, opts),
+    "None of the above"
+  );
+});
+
+test("qa-bank answers Anthropic / China / clearance stuck patterns", () => {
+  assert.match(heuristicAnswer("Why Anthropic?", candidate, { company: "anthropic" }, prefs), /Anthropic|safety|LLM/i);
+  assert.equal(heuristicAnswer("Are you legally authorized to work in China?", candidate, {}, prefs, ["Yes", "No"]), "No");
+  assert.equal(heuristicAnswer("Do you have a security clearance?", candidate, {}, prefs, ["Yes", "No"]), "No");
+  assert.equal(
+    heuristicAnswer("Are you open to working in-person in one of our offices 25% of the time?", candidate, {}, prefs, ["Yes", "No"]),
+    "Yes"
+  );
+});
+
+test("zip_code and employer title from profile", () => {
+  const c = { ...candidate, zip_code: "75075", location: "Plano, TX", current_title: "Applied AI Engineer" };
+  assert.equal(heuristicAnswer("Zip Code / Postal Code", c, {}, prefs), "75075");
+  assert.equal(heuristicAnswer("Who is your current or most recent employer?", c, {}, prefs), "Example LLC");
+  assert.equal(heuristicAnswer("What is your current or more recent job title?", c, {}, prefs), "Applied AI Engineer");
 });

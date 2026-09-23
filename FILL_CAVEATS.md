@@ -20,7 +20,7 @@ Patterns drawn from live Stripe/Greenhouse fills, Fillow v1, and OSS
 | ATS | Question source | Hard widgets | Status in fillow |
 |-----|-----------------|--------------|------------------|
 | Greenhouse | Public boards API + embed DOM | react-select, intl-tel `#country` dial, education typeahead, OFCCP EEO | Primary; Stripe-proven |
-| Ashby | DOM labels / yes-no buttons | Custom option buttons, typeahead | Supported |
+| Ashby | DOM labels / yes-no buttons / typeahead | Custom `_option_` Yes/No (`type=submit`), dead `for=` comboboxes, datepicker, checkbox groups | Supported — see Ashby incidents below |
 | Lever | `/apply` DOM | ARIA dropdowns | Supported |
 | Workday | Auth gate + multi-step | Account/login, conditionals | Review-only fallback |
 | Others | DOM best-effort | Unknown widgets | Skip or review |
@@ -60,12 +60,36 @@ Agent 1 lists jobs via `boards-api.greenhouse.io/.../jobs`; Agent 3 loads
 ## What we did not vendor
 
 - ChamPro’s injected `dom-toolkit` (Claude-plugin / in-page) — we stay Playwright + Node.
-- auto-apply’s learner CSV — optional later; profile locks beat learned guesses.
+- auto-apply’s learner CSV as an unsupervised model — instead we keep a curated
+  **reference Q&A bank** (`data/qa-bank.json`) plus a stuck-label log
+  (`data/stuck-questions.jsonl`). Agent 3 consults the bank after profile locks;
+  when a submit lands in `review`, labels are appended to the stuck log so the
+  next heuristic/bank entry can be ported intentionally (never invent facts).
 - Vision/screenshot agents for every ATS — too slow for 40–50 apps/day.
+
+## Stuck → bank (Agent 3 ownership)
+
+1. Apply run writes stuck labels into `data/stuck-questions.jsonl` on review.
+2. Port repeated labels into `data/qa-bank.json` or `lib/answer-engine.mjs` heuristics.
+3. Add a unit test with the real question string.
+4. Re-try that board — do not keep re-applying Stripe / already-contacted companies.
+
+## Ashby (incident-driven — 2026-09-21)
+
+| Bug | Symptom | Guard |
+|-----|---------|-------|
+| Ancestor walk for combobox | Cerebras “Open to relocation” filled as Location | Classify/scrape **field entry only** (`_fieldEntry_`); never outer `fieldset` |
+| Bare `work from` regex | OpenAI office Yes/No typed as “United States” | `isAshbyLocationLabel` / `ashbyRetryIsLocation` — exclude office/sponsor Yes/No |
+| Yes/No `button[type=submit]` | Sponsorship / polygraph left empty | Playwright `force` click on `_option_` in field entry; `ASHBY_YESNO_RULES` |
+| `always_yes: assessment` | Export-control radio → `"Yes"` | Export / U.S. person rules **before** prefs; prefs skip multi-option radios |
+| False `applied` | Still on `/application` with required errors | Ashby needs confirmation / `successfully submitted`; else `review` |
+| Long `work_location_intent` seed | Typeahead never commits | `ashbyAutocompleteTries` seeds `United States` first |
+
+Pure helpers: `lib/ashby-fields.mjs`. Tests: `tests/ashby-fields.test.mjs`.
 
 ## When a new board breaks a fill
 
 1. Capture the empty label + option list (API or open-menu scrape).
-2. Add an alias or kind rule in `lib/field-kinds.mjs` / `lib/form-controls.mjs`.
+2. Add an alias or kind rule in `lib/field-kinds.mjs` / `lib/form-controls.mjs` / `lib/ashby-fields.mjs`.
 3. Add a unit test with the real option strings.
 4. Only then re-run REVIEW_MODE — do not invent a one-off Stripe branch.

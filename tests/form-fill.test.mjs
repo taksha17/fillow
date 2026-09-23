@@ -20,7 +20,7 @@ import {
 
 test("idSel quotes Greenhouse ids that would break a # selector", () => {
   assert.equal(idSel("question_48620089"), '[id="question_48620089"]');
-  assert.equal(idSel("question_48620090[]"), '[id="question_48620090"]');
+  assert.equal(idSel("question_48620090[]"), '[id="question_48620090[]"], [id="question_48620090"]');
   assert.equal(idSel('job_application[answers][1]'), '[id="job_application[answers][1]"]');
 });
 

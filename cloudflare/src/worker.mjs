@@ -73,7 +73,9 @@ export default {
       const row = await env.DB.prepare(
         "SELECT resume_md, company FROM applications WHERE id = " + num
       ).first();
-      if (!row || !row.resume_md) return json({ error: "no resume on file for this application" }, 404);
+      if (!row || !row.resume_md) {
+    return json({ error: "file not available on server — resume_md missing; re-run fillow track / repair-dashboard" }, 404);
+  }
       const slug = String(row.company || "resume").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "resume";
       return new Response(row.resume_md, {
         headers: {

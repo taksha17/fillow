@@ -61,6 +61,65 @@ node bin/fillow.mjs gmail
 node bin/fillow.mjs cf setup   # optional hosted dashboard + D1
 ```
 
+## Agent Programmatic Interface (OSS / cross-agent contract)
+
+Each agent is a plain ES module with **zero build step** (Node >= 18), so any
+coding agent or agentic CLI (Cursor, Claude Code, Kilo, Qwen Code, ...) can
+drive fillow two ways:
+
+**1. Direct import** (no CLI needed):
+
+```js
+import { scrapeJobs } from "./agents/discover.mjs";        // Agent 1
+import { evaluateTailor } from "./agents/evaluate-tailor.mjs"; // Agent 2
+import { applyJobs } from "./agents/apply.mjs";            // Agent 3
+import { trackDashboard } from "./agents/track.mjs";       // Agent 4
+
+const cfg = (await import("./lib/config.mjs")).loadConfig();
+const jobs = await scrapeJobs(cfg);                        // → data/jobs.tsv
+await evaluateTailor(cfg);                                 // → reports/ + data/tailored/
+await applyJobs(jobs, cfg);                                // → data/applications.md rows
+await trackDashboard([], cfg);                             // → output/dashboard.html
+```
+
+**2. Standalone execution** (each file runs directly):
+
+```bash
+node agents/discover.mjs
+node agents/evaluate-tailor.mjs --score-only
+node agents/apply.mjs
+node agents/track.mjs
+```
+
+Every agent file guards with `const isCli = process.argv[1]?.endsWith("<name>.mjs")`
+— importing never triggers a run, executing always does.
+
+Exported entry points (the full OSS surface):
+
+| Module | Exports |
+|---|---|
+| `agents/discover.mjs` | `scrapeJobs(cfg, emit)` · `matchesTargets(job, targets)` · `livenessVerdict(liveness)` |
+| `agents/evaluate-tailor.mjs` | `evaluateTailor(cfg, opts)` · `scoreOnlyRequested(argv, env)` |
+| `agents/apply.mjs` | `applyJobs(jobs, cfg)` |
+| `agents/track.mjs` | `trackDashboard(results, cfg)` |
+| `agents/discover-mygreenhouse.mjs` | `discoverMyGreenhouse(cfg, opts)` |
+| `agents/evaluate-mygreenhouse.mjs` | `evaluateMyGreenhouse(cfg, opts)` |
+| `agents/apply-mygreenhouse.mjs` | `applyMyGreenhouse(jobs, cfg)` |
+| `agents/track-mygreenhouse.mjs` | `trackMyGreenhouse(results, cfg)` |
+
+The `-mygreenhouse` variants are the optional MyGreenhouse session flow
+(`use_mygreenhouse` in `runtime`); they obey the same import/CLI guard pattern
+but are off unless enabled in config.
+
+Contract rules for external drivers:
+- Pass `cfg` from `lib/config.mjs`'s `loadConfig()` — never hand-rolled config.
+- Identity facts, DRY_RUN, caps, and pacing all live in `cfg`; an external
+  agent cannot bypass `DRY_RUN=true` through the API.
+- `emit` (Agent 1, Agent 2) is an optional `(event, payload)` callback for
+  progress streaming; pass `null` for silent runs.
+- All four agents are side-effect-isolated per job — one job failing never
+  blocks the batch, so an external driver can safely call them on partial input.
+
 ## Layout (as of 2026-09-20)
 
 ```

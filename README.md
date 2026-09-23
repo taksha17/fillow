@@ -112,6 +112,39 @@ After `npm link` (or `npx fillow`) the same commands are just
 
 ---
 
+## 🤖 Drive it from your own agent
+
+fillow is built to be **OSS and agent-native**: every agent is a plain ES module
+(Node ≥ 18, zero build step), so *your* coding agent — Cursor, Claude Code,
+Kilo, Qwen Code, whatever you use — can run the crew directly, no CLI required:
+
+```js
+import { scrapeJobs } from "./agents/discover.mjs";             // Agent 1
+import { evaluateTailor } from "./agents/evaluate-tailor.mjs";  // Agent 2
+import { applyJobs } from "./agents/apply.mjs";                 // Agent 3
+import { trackDashboard } from "./agents/track.mjs";            // Agent 4
+
+const cfg = (await import("./lib/config.mjs")).loadConfig();
+const jobs = await scrapeJobs(cfg);
+await evaluateTailor(cfg);
+await applyJobs(jobs, cfg);
+await trackDashboard([], cfg);
+```
+
+Or just execute them standalone — each file runs directly:
+
+```bash
+node agents/discover.mjs
+node agents/evaluate-tailor.mjs --score-only
+```
+
+The safety gates travel with the API: `DRY_RUN`, caps, pacing, and identity
+facts all live in `cfg`, so an external agent **cannot bypass them**. Full
+contract (exports, `emit` progress hooks, per-job isolation): [AGENTS.md](AGENTS.md) →
+*Agent Programmatic Interface*.
+
+---
+
 ## 🛡️ The gates (why you can trust it)
 
 - `DRY_RUN=true` until you have reviewed a run — **nothing is submitted until then, ever.**

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { scrapeJobs } from "../agents/discover.mjs";
-import { evaluateTailor } from "../agents/evaluate-tailor.mjs";
+import { evaluateTailor, selectTailorBatch } from "../agents/evaluate-tailor.mjs";
 import { applyJobs } from "../agents/apply.mjs";
 import { trackDashboard } from "../agents/track.mjs";
 import { runOnline } from "../scripts/online.mjs";
@@ -18,6 +18,29 @@ test("all four agents export the pipeline entry points", () => {
   assert.equal(typeof trackDashboard, "function");
   assert.equal(typeof runOnline, "function");
   assert.equal(typeof runOffline, "function");
+});
+
+test("selectTailorBatch walks the backlog, skipping already-tailored jobs", () => {
+  const jobs = [
+    { company: "A" },
+    { company: "B" },
+    { company: "C" },
+    { company: "D" },
+  ];
+  const done = (job) => job.done === true;
+  jobs[0].done = true;
+  const first = selectTailorBatch(jobs, 2, done);
+  assert.deepEqual(first.map((j) => j.company), ["B", "C"]);
+  first.forEach((j) => { j.done = true; });
+  const second = selectTailorBatch(jobs, 2, done);
+  assert.deepEqual(second.map((j) => j.company), ["D"]);
+  second.forEach((j) => { j.done = true; });
+  assert.deepEqual(selectTailorBatch(jobs, 2, done), []);
+});
+
+test("selectTailorBatch cap 0 or empty input yields empty batch", () => {
+  assert.deepEqual(selectTailorBatch([{ company: "A" }], 0, () => false), []);
+  assert.deepEqual(selectTailorBatch([], 5, () => false), []);
 });
 
 test("Agent 3 → 4 handoff records dry-run rows", async () => {

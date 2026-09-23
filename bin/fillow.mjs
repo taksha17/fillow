@@ -16,6 +16,14 @@ export const HELP = `fillow — one CLI, four agents, hybrid by default
   fillow evaluate     Agent 2  score, gate, tailor  (--score-only skips PDFs)
   fillow apply        Agent 3  Playwright fill / OTP / submit
   fillow track        Agent 4  tracker, Gmail watch, dashboard
+
+  fillow mgh discover   Agent 1 via BrowserSkill — scrape logged-in MyGreenhouse
+  fillow mgh evaluate   Agent 2 on jobs.tsv (incl. mgh:* rows)
+  fillow mgh apply      Agent 3 via BrowserSkill — apply inside MyGreenhouse
+  fillow mgh track      Agent 4 tracker sync
+  fillow mgh run        discover → evaluate → apply → track (local, logged-in Chrome)
+  fillow mgh loop       continuous discover → tailor → apply → track (BrowserSkill bg)
+
   fillow doctor       environment check
   fillow setup        onboarding wizard — profile checklist, board setup (--boards saves the Greenhouse session)
   fillow enrich       Agent 2 sub-agent — pull GitHub/LinkedIn into resume data (--force fresh, 24h cache)
@@ -32,7 +40,8 @@ npm start = fillow run. npm run online|offline|pull|scrape|evaluate|apply|track 
 
 Setup: copy .env.example → .env and config/profile.example.yaml → config/profile.yaml
 Default DRY_RUN=true. Playwright apply and Gmail IMAP stay on this machine.
-See HYBRID.md for the Actions / local split and the 1000-minute budget.
+MyGreenhouse lane needs BrowserSkill (bsk) + Chrome extension connected & signed in.
+See HYBRID.md and MYGREENHOUSE.md.
 `;
 
 const scripts = {
@@ -52,6 +61,15 @@ const scripts = {
   track: ["agents/track.mjs"],
   gmail: ["scripts/gmail-check.mjs"],
   lint: ["scripts/check-syntax.mjs"],
+};
+
+const mghScripts = {
+  discover: ["agents/discover-mygreenhouse.mjs"],
+  evaluate: ["agents/evaluate-mygreenhouse.mjs"],
+  apply: ["agents/apply-mygreenhouse.mjs"],
+  track: ["agents/track-mygreenhouse.mjs"],
+  run: ["scripts/mgh-run.mjs"],
+  loop: ["scripts/mgh-loop.mjs"],
 };
 
 const cfScripts = {
@@ -90,6 +108,16 @@ export function main(argv = process.argv.slice(2)) {
     const mapped = cfScripts[rest[0]];
     if (!mapped) {
       process.stderr.write("Unknown fillow cf command. Try: setup | dev | sync | deploy\n");
+      return 1;
+    }
+    runNode(mapped, rest.slice(1));
+    return undefined;
+  }
+
+  if (cmd === "mgh") {
+    const mapped = mghScripts[rest[0]];
+    if (!mapped) {
+      process.stderr.write("Unknown fillow mgh command. Try: discover | evaluate | apply | track | run | loop\n");
       return 1;
     }
     runNode(mapped, rest.slice(1));

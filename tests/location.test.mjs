@@ -39,3 +39,14 @@ test("Agent 2 stamps the Greenhouse search string on the job", () => {
   assert.equal(tagged.greenhouse_location, "Plano, Texas, United States");
   assert.equal(tagged.greenhouse_location_ok, true);
 });
+
+test("isUsJobLocation is strict for MyGreenhouse US-only", async () => {
+  const { isUsJobLocation } = await import("../lib/location.mjs");
+  assert.equal(isUsJobLocation({ location: "Hybrid — Boston, MA" }), true);
+  assert.equal(isUsJobLocation({ location: "Remote — United States" }), true);
+  assert.equal(isUsJobLocation({ location: "Remote" }), true);
+  assert.equal(isUsJobLocation({ location: "Hybrid — Bangkok Metropolis, TH" }), false);
+  assert.equal(isUsJobLocation({ location: "Remote — Quebec, QC" }), false);
+  assert.equal(isUsJobLocation({ location: "Amsterdam, Netherlands" }), false);
+  assert.equal(isUsJobLocation({ location: "" }), false);
+});

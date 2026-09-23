@@ -8,14 +8,21 @@ import { launchBrowser, sleep } from "../lib/browser.mjs";
 import { applyOnPage, result } from "../lib/form-fill.mjs";
 import { makeLlmChat } from "../lib/llm.mjs";
 import { resolveResumePath } from "../lib/resume-pdf.mjs";
+import { runAgentCli } from "../lib/progress.mjs";
 
 const spamBoards = new Set();
+
+function jobId(job) {
+  return `${job.source || "job"}:${job.external_id || job.url || ""}`;
+}
 
 function resumeFor(job, cfg) {
   return resolveResumePath(job, cfg);
 }
 
-export async function applyJobs(jobs, cfg = loadConfig()) {
+export async function applyJobs(jobs, cfg = loadConfig(), opts = {}) {
+  const emit = opts.emit || null;
+  const log = emit ? (message, data = {}) => emit("log", { message, ...data }) : console.log;
   const pool = (jobs?.length ? jobs : readJobs()).filter((j) => j.status === "ready" || j.status === "discovered");
   const cap = cfg.runtime.max_applies_per_run;
   const taken = pool.slice(0, cap);
@@ -25,11 +32,18 @@ export async function applyJobs(jobs, cfg = loadConfig()) {
   const reviewMode = cfg.runtime.review_mode || !cfg.runtime.auto_submit;
   const pauseSeconds = cfg.runtime.pre_submit_pause_seconds ?? 4;
 
+  if (emit) emit("phase.start", { phase: "apply", label: "Apply to jobs", total: taken.length });
+
   let session = null;
   try {
-    for (const job of taken) {
+    for (let idx = 0; idx < taken.length; idx += 1) {
+      const job = taken[idx];
+      const id = jobId(job);
+      if (emit) emit("item.start", { phase: "apply", job_id: id, item: `${job.company || "unknown"} — ${job.title || "unknown"}` });
+
       if (isBlacklisted(job.company)) {
         results.push(result(job, "skipped", "blacklist"));
+        if (emit) emit("item.done", { phase: "apply", job_id: id, result: { status: "skipped", reason: "blacklist" } });
         continue;
       }
       if (cfg.runtime.dry_run) {
@@ -37,18 +51,21 @@ export async function applyJobs(jobs, cfg = loadConfig()) {
         results.push(result(job, "dry_run", "DRY_RUN=true; browser skipped", {
           pdf: resumePath && existsSync(resumePath) ? "✅" : "❌",
         }));
+        if (emit) emit("item.done", { phase: "apply", job_id: id, result: { status: "dry_run" } });
         continue;
       }
 
       const ats = detectAts(job);
       if (spamBoards.has(ats)) {
         results.push(result(job, "review", `${ats} previously flagged spam this run — review mode`));
+        if (emit) emit("item.done", { phase: "apply", job_id: id, result: { status: "review", reason: "spam_board" } });
         continue;
       }
 
       const resumePath = resumeFor(job, cfg);
       if (!resumePath || !existsSync(resumePath)) {
         results.push(result(job, "failed", `Resume missing: ${resumePath || "(unset)"}`));
+        if (emit) emit("item.error", { phase: "apply", job_id: id, message: `Resume missing: ${resumePath || "(unset)"}` });
         continue;
       }
 
@@ -77,8 +94,10 @@ export async function applyJobs(jobs, cfg = loadConfig()) {
             // ignore
           }
         }
+        if (emit) emit("item.done", { phase: "apply", job_id: id, result: { status: out.status, notes: out.notes } });
       } catch (err) {
         results.push(result(job, "failed", String(err.message || err).slice(0, 500)));
+        if (emit) emit("item.error", { phase: "apply", job_id: id, message: String(err.message || err).slice(0, 500) });
       }
 
       const delay = (cfg.runtime.apply_delay_seconds || 6) * (0.5 + Math.random());
@@ -97,18 +116,22 @@ export async function applyJobs(jobs, cfg = loadConfig()) {
         // ignore
       }
     } else if (session) {
-      console.log("  keep_browser_open: leaving Playwright session up");
+      log("  keep_browser_open: leaving Playwright session up");
     }
   }
 
-  console.log(`📝 Apply: ${results.length} of cap ${cap} (dry_run=${cfg.runtime.dry_run} review=${reviewMode})`);
+  if (emit) emit("phase.complete", { phase: "apply", total: taken.length, summary: `${results.length} applied` });
+  log(`📝 Apply: ${results.length} of cap ${cap} (dry_run=${cfg.runtime.dry_run} review=${reviewMode})`);
   return results;
 }
 
 const isCli = process.argv[1]?.endsWith("apply.mjs");
 if (isCli) {
-  applyJobs().catch((err) => {
-    console.error(err);
-    process.exit(1);
+  runAgentCli({
+    agent: "apply",
+    run: async (emit) => applyJobs(undefined, loadConfig(), { emit }),
+    summarize: (results) => `${results.length} applications`,
+  }).catch(() => {
+    process.exitCode = 1;
   });
 }
