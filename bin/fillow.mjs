@@ -30,6 +30,7 @@ export const HELP = `fillow — one CLI, four agents, hybrid by default
   fillow auth         platform auth matrix (NIM, Gmail, GitHub, LLM fallbacks, Cloudflare, Supabase)
   fillow gmail        IMAP login (OTP + reply-watch)
   fillow cron         1-click daily discover schedule (status | enable | disable | run)
+  fillow skill        install fillow skills into any AI CLI harness (list | install)
   fillow lint         syntax check
   fillow test         node --test
   fillow cf setup     optional Workers + D1 hosting
@@ -62,6 +63,7 @@ const scripts = {
   track: ["agents/track.mjs"],
   gmail: ["scripts/gmail-check.mjs"],
   cron: ["scripts/cron.mjs"],
+  skill: ["scripts/skill.mjs"],
   lint: ["scripts/check-syntax.mjs"],
 };
 

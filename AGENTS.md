@@ -39,7 +39,7 @@ this order — every layer wins over everything below it:
 2. **Preference force-lists** — `always_yes` / `always_no` keyword rules from
    `answer_preferences`.
 3. **Claims library** — short claims for free-text skill questions.
-4. **NVIDIA NIM** — tone-controlled JSON answers for everything else, then
+4. **LLM (Groq → NIM)** — tone-controlled JSON answers for everything else, then
    option alignment to exact ATS option strings.
 
 When you change one layer, check the others still hold.
@@ -64,9 +64,18 @@ node bin/fillow.mjs cf setup   # optional hosted dashboard + D1
 
 ## Agent Programmatic Interface (OSS / cross-agent contract)
 
+fillow is **harness-first**: the four agents are plain modules, and the harness
+is whatever AI CLI drives them (Cursor, Claude Code, Qwen Code, Kilo, ...).
 Each agent is a plain ES module with **zero build step** (Node >= 18), so any
-coding agent or agentic CLI (Cursor, Claude Code, Kilo, Qwen Code, ...) can
-drive fillow two ways:
+hosting agent can drive fillow three ways:
+
+**0. Skills** (harness-discovered): vendored, self-contained skill docs in
+`skills/` (`fillow-discover` = Agent 1's contract, `fillow-browser` = the
+logged-in-browser engine). Install into any harness with one command:
+
+```bash
+node bin/fillow.mjs skill install all --target qwen     # or cursor | claude | kilo
+```
 
 **1. Direct import** (no CLI needed):
 
@@ -135,6 +144,7 @@ scripts/pull-jobs.mjs        # gh run download → data/jobs.tsv
 providers/                   # ashby, greenhouse, lever, liveness, http
 lib/                         # config, answer-engine, tracker, gmail, browser, form-fill
 skills/fillow-browser/       # vendored Fillow Browser Skill (bsk CLI) — Agent 3 optional engine docs
+skills/fillow-discover/      # vendored Agent 1 harness skill — the cross-CLI discovery contract (`fillow skill install`)
 config/profile.yaml          # candidate + behavior (source of identity facts)
 tests/                       # node --test
 HYBRID.md                    # Actions vs local vs Cloudflare
@@ -192,7 +202,7 @@ card): https://dash.cloudflare.com/sign-up then `npm run cf:setup`.
 ## Stack
 
 - **Runtime**: Node.js (ESM), Playwright (browser automation + PDF)
-- **AI/LLM**: NVIDIA NIM primary (`NVIDIA_API_KEY`), Groq/OpenAI fallbacks
+- **AI/LLM**: Groq primary (`GROQ_API_KEY`), NVIDIA NIM fallback (`NVIDIA_API_KEY`), OpenAI last-resort
 - **Config**: `config/profile.yaml` (candidate + behavior), `.env` (secrets)
 - **Data**: local canonical files + optional Cloudflare D1 hosted index
 - **Testing**: `node --test`, suites in `tests/`

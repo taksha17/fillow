@@ -48,19 +48,16 @@ export function selectTailorBatch(readyJobs, cap, alreadyTailored = () => false)
  * Score jobs and apply legitimacy gates.
  * @returns {Array} Array of scored jobs with status set
  */
-async function scoreAndLegitimacyCheck(jobs, cfg, emit) {
+async function scoreAndLegitimacyCheck(jobs, cfg, emit, { scoreOnly = false, log = console.log } = {}) {
     emit?.("phase.start", { phase: "evaluate.score", label: "Scoring & Legitimacy", total: jobs.length });
     const scoredJobs = rankJobs(jobs, cfg.targets, cfg.candidate);
 
-    if (opts.scoreOnly ?? scoreOnlyRequested()) {
-        emit?.("phase.complete", { phase: "evaluate.score", total: jobs.length, summary: "score-only mode" });
-        return scoredJobs;
+    if (!scoreOnly) {
+        emit?.("phase.start", { phase: "evaluate.nim-verify", label: "NIM verification (borderline)", total: scoredJobs.length });
+        await verifyBorderlineJobs(scoredJobs, cfg.candidate, cfg);
+        scoredJobs.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+        emit?.("phase.complete", { phase: "evaluate.nim-verify", total: scoredJobs.length, summary: "complete" });
     }
-
-    emit?.("phase.start", { phase: "evaluate.nim-verify", label: "NIM verification (borderline)", total: scoredJobs.length });
-    await verifyBorderlineJobs(scoredJobs, cfg.candidate, cfg);
-    scoredJobs.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
-    emit?.("phase.complete", { phase: "evaluate.nim-verify", total: scoredJobs.length, summary: "complete" });
 
     const survivors = [];
     let reportNum = 1;
@@ -109,19 +106,19 @@ async function scoreAndLegitimacyCheck(jobs, cfg, emit) {
     const readyJobs = survivors.filter((j) => j.status === "ready");
     log(`  ${readyJobs.length} jobs ready for tailoring`);
     emit?.("phase.complete", { phase: "evaluate.score", total: jobs.length, summary: `${readyJobs.length} ready` });
-    return survivors;
+    return { survivors, scoredJobs };
 }
 
 /**
  * Perform tailoring operations: JD analysis, cover letters, and resume generation.
  * @returns {number} Number of successfully tailored jobs
  */
-async function performTailoring(toTailor, cfg, emit) {
+async function performTailoring(toTailor, cfg, emit, { log = console.log, totalReady = 0, doneCount = 0, backlog = 0 } = {}) {
     if (toTailor.length === 0) return 0;
 
     emit?.("phase.start", { phase: "evaluate.tailor", label: "Jake's Resume + cover letters", total: toTailor.length });
     log("\n[Phase 2b] Jake's Resume + cover letters (1 page, Times New Roman, per job)");
-    log(`  Tailoring next ${toTailor.length} of ${readyJobs.length} ready — ${doneJobs.length} already tailored${backlog > 0 ? `, ${backlog} queued for later runs` : ""}`);
+    log(`  Tailoring next ${toTailor.length} of ${totalReady} ready — ${doneCount} already tailored${backlog > 0 ? `, ${backlog} queued for later runs` : ""}`);
 
     // JD Analysis
     emit?.("phase.start", { phase: "evaluate.jd-analyze", label: "JD analysis", total: toTailor.length });
@@ -203,7 +200,7 @@ export async function evaluateTailor(cfg = loadConfig(), opts = {}) {
     ensureDataDirs();
 
     // Score and legitimacy check
-    const survivors = await scoreAndLegitimacyCheck(jobs, cfg, emit);
+    const { survivors, scoredJobs } = await scoreAndLegitimacyCheck(jobs, cfg, emit, { scoreOnly, log });
     const readyJobs = survivors.filter((j) => j.status === "ready");
 
     if (scoreOnly) {
@@ -223,8 +220,8 @@ export async function evaluateTailor(cfg = loadConfig(), opts = {}) {
     const toTailor = selectTailorBatch(readyJobs, tailorCap, alreadyTailored);
     const backlog = readyJobs.length - doneJobs.length - toTailor.length;
     
-    const successCount = await performTailoring(toTailor, cfg, emit);
-    
+    const successCount = await performTailoring(toTailor, cfg, emit, { log, totalReady: readyJobs.length, doneCount: doneJobs.length, backlog });
+
     writeJobs(scoredJobs);
     mkdirSync(PATHS.tailored, { recursive: true });
     log(`\nEvaluated ${jobs.length}; ${readyJobs.length} ready (min=${cfg.runtime.min_match_score})`);
