@@ -113,7 +113,7 @@ async function scoreAndLegitimacyCheck(jobs, cfg, emit, { scoreOnly = false, log
  * Perform tailoring operations: JD analysis, cover letters, and resume generation.
  * @returns {number} Number of successfully tailored jobs
  */
-async function performTailoring(toTailor, cfg, emit, { log = console.log, totalReady = 0, doneCount = 0, backlog = 0 } = {}) {
+async function performTailoring(toTailor, cfg, emit, { log = console.log, warn = console.warn, totalReady = 0, doneCount = 0, backlog = 0 } = {}) {
     if (toTailor.length === 0) return 0;
 
     emit?.("phase.start", { phase: "evaluate.tailor", label: "Jake's Resume + cover letters", total: toTailor.length });
@@ -220,7 +220,7 @@ export async function evaluateTailor(cfg = loadConfig(), opts = {}) {
     const toTailor = selectTailorBatch(readyJobs, tailorCap, alreadyTailored);
     const backlog = readyJobs.length - doneJobs.length - toTailor.length;
     
-    const successCount = await performTailoring(toTailor, cfg, emit, { log, totalReady: readyJobs.length, doneCount: doneJobs.length, backlog });
+    const successCount = await performTailoring(toTailor, cfg, emit, { log, warn, totalReady: readyJobs.length, doneCount: doneJobs.length, backlog });
 
     writeJobs(scoredJobs);
     mkdirSync(PATHS.tailored, { recursive: true });
