@@ -25,7 +25,7 @@ import {
   seedCommonQaBank,
   mghCanonicalUrl,
 } from "../lib/mygreenhouse.mjs";
-import { resolveResumePath, generateSinglePdf, tailoredResumePath } from "../lib/resume-pdf.mjs";
+import { resolveResumePath } from "../lib/resume-pdf.mjs";
 import { ensureJobDescription } from "../lib/ats.mjs";
 import { analyzeJD } from "../lib/jd-analyze.mjs";
 import { makeLlmChat } from "../lib/llm.mjs";
@@ -45,42 +45,45 @@ function matchesTargets(job, targets) {
 function contacted() {
   const companies = new Set();
   const keys = new Set();
+  const roles = new Set();
   for (const row of readTracker()) {
     const notes = String(row.notes || "");
     const falsePos = /FALSE_POSITIVE/i.test(notes);
     const status = String(row.status || "").toLowerCase();
     // Allow retry of false-positive "applied"/review rows — they never landed.
     if (falsePos && /review|applied|submitted/i.test(status)) continue;
+    // Already attempted (applied / submitted / review / failed) — do not refill.
     if (row.company) companies.add(String(row.company).toLowerCase());
-    const k = mghJobKey(row.notes);
+    const k =
+      mghJobKey(notes)
+      || mghJobKey(urlFromNotes(notes))
+      || mghJobKey(row.url);
     if (k) keys.add(k);
+    const co = String(row.company || "").toLowerCase().trim();
+    const role = String(row.role || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (co && role) roles.add(`${co}::${role}`);
   }
-  return { companies, keys };
+  return { companies, keys, roles };
 }
 
-function pickOne(jobs, seen) {
-  return jobs.find((j) => {
-    if (!isUsJobLocation(j)) return false;
-    if (isBlacklisted(j.company)) return false;
-    const key = mghJobKey(j.external_id) || mghJobKey(j.apply_url || j.url);
-    // Skip only this exact posting — other roles at the same company are OK.
-    if (key && seen.keys.has(key)) return false;
-    return true;
-  });
+function roleKey(job) {
+  const co = String(job.company || "").toLowerCase().trim();
+  const role = String(job.title || job.role || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return co && role ? `${co}::${role}` : "";
 }
 
-/** Prefer a never-contacted company; else fall back to a new job key at a known company. */
+/** Next job: never-contacted company only (no re-fill of tracker companies). */
 function pickNext(jobs, seen) {
-  const fresh = jobs.find((j) => {
+  return jobs.find((j) => {
     if (!isUsJobLocation(j)) return false;
     if (isBlacklisted(j.company)) return false;
     const key = mghJobKey(j.external_id) || mghJobKey(j.apply_url || j.url);
     if (key && seen.keys.has(key)) return false;
     if (seen.companies.has(String(j.company || "").toLowerCase())) return false;
+    const rk = roleKey(j);
+    if (rk && seen.roles.has(rk)) return false;
     return true;
   });
-  if (fresh) return fresh;
-  return pickOne(jobs, seen);
 }
 
 function jobFromUrl(url) {
@@ -148,7 +151,11 @@ function argValue(flag) {
 async function main() {
   const cfg = loadConfig();
   seedCommonQaBank(cfg.candidate, cfg.answer_preferences || {});
-  const llmChat = makeLlmChat(cfg);
+  // Watch fills: prefer a snappy timeout so Groq stalls fall through to NIM quickly.
+  const llmChat = makeLlmChat(cfg, {
+    timeoutMs: Math.min(Number(cfg.ai?.timeout_ms) || 180000, 45000),
+    thinking: false,
+  });
   const seen = contacted();
   // Only retry a specific URL when --retry-url is passed. Otherwise discover a new job.
   const retryUrl = argValue("--retry-url");
@@ -204,24 +211,9 @@ async function main() {
         job._jd_analysis = null;
       }
 
-      // Always prefer a per-job Jake PDF. Profile resume_path must not skip generation.
-      let resumePath = null;
-      const tailored = tailoredResumePath(job);
-      if (tailored && existsSync(tailored)) {
-        resumePath = tailored;
-      } else {
-        console.log("[mgh-one] generating Jake PDF (per-job tailored)…");
-        try {
-          resumePath = await generateSinglePdf(cfg, job, { force: true });
-        } catch (err) {
-          console.warn(`[mgh-one] Jake PDF failed: ${String(err.message || err).slice(0, 160)}`);
-        }
-      }
-      if (!resumePath || !existsSync(resumePath)) {
-        resumePath = resolveResumePath(job, cfg);
-        console.warn(`[mgh-one] falling back to profile resume: ${resumePath}`);
-      }
-      console.log(`[mgh-one] resume=${resumePath}`);
+      // Profile resume lives on MyGreenhouse — skip per-job Jake PDF + upload for bsk.
+      let resumePath = resolveResumePath(job, cfg);
+      console.log(`[mgh-one] resume=profile (upload skipped) ${resumePath || "(none)"}`);
 
       await pause(1500);
       const out = await applyMyGreenhouseJob(sessionId, job, cfg, {
@@ -229,6 +221,7 @@ async function main() {
         resumePath,
         llmChat,
         oneShot: true,
+        uploadResume: false,
       });
 
       const finalUrl = mghCanonicalUrl(job) || out.url;

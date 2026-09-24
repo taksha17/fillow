@@ -11,9 +11,12 @@ const baseCfg = {
 test("authMatrix reports missing platforms without throwing", async () => {
   const rows = await authMatrix(baseCfg);
   assert.equal(rows.length, 7);
-  const nim = rows.find((r) => r.platform === "NVIDIA NIM");
-  assert.equal(nim.status, "missing");
-  assert.equal(nim.required, true);
+  const groq = rows.find((r) => r.platform === "Groq");
+  assert.equal(groq.status, "missing");
+  assert.equal(groq.required, true);
+  const nim = rows.find((r) => r.platform === "NVIDIA NIM (LLM fallback)");
+  assert.equal(nim.status, "off");
+  assert.equal(nim.required, false);
   const gmail = rows.find((r) => r.platform === "Gmail IMAP");
   assert.equal(gmail.status, "missing");
   const github = rows.find((r) => r.platform === "GitHub");
@@ -25,14 +28,14 @@ test("authMatrix reports missing platforms without throwing", async () => {
 test("formatAuthMatrix flags required failures in the footer", async () => {
   const rows = await authMatrix(baseCfg);
   const text = formatAuthMatrix(rows);
-  assert.match(text, /NVIDIA NIM/);
+  assert.match(text, /Groq/);
   assert.match(text, /Gmail IMAP/);
   assert.match(text, /required integration\(s\) need attention/);
 });
 
 test("formatAuthMatrix footer is green when required platforms are ok", () => {
   const text = formatAuthMatrix([
-    { platform: "NVIDIA NIM", required: true, status: "ok", detail: "reachable" },
+    { platform: "Groq", required: true, status: "ok", detail: "reachable" },
     { platform: "Gmail IMAP", required: true, status: "ok", detail: "inbox 10" },
   ]);
   assert.match(text, /All required integrations are connected/);

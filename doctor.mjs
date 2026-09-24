@@ -26,7 +26,8 @@ try {
 
 check(".env present", existsSync(PATHS.env), PATHS.env);
 if (cfg) {
-  check("NVIDIA_API_KEY", Boolean(cfg.secrets.nvidia_api_key), cfg.secrets.nvidia_api_key ? "set" : "missing (needed for NIM verify / answers)");
+  check("GROQ_API_KEY", Boolean(cfg.secrets.groq_api_key), cfg.secrets.groq_api_key ? "set" : "missing (primary LLM for answers)");
+  check("NVIDIA_API_KEY", Boolean(cfg.secrets.nvidia_api_key), cfg.secrets.nvidia_api_key ? "set" : "missing (optional NIM fallback / score verify)");
   if (gmailConfigured(cfg)) {
     try {
       const inbox = await checkGmailInbox(cfg);

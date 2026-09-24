@@ -7,7 +7,13 @@ output/
 .wrangler/
 cloudflare/.wrangler/
 cloudflare/.sync.sql
+cloudflare/.sync-*.sql
 cloudflare/.dev.vars
+
+# personal resume at repo root (resume_path in config/profile.yaml) —
+# profile.example.yaml ships a generic setup instead
+/resume.md
+/resume.pdf
 
 # data/ is user-personal + generated (cover letters, tracker, TSV, DB, state) —
 # only the generic *.example.* copies are committed

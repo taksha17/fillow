@@ -1,6 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chatRequestBody, applySseDataLine } from "../lib/llm.mjs";
+import { chatRequestBody, applySseDataLine, llmProviders } from "../lib/llm.mjs";
+
+test("provider order is Groq then NVIDIA then OpenAI", () => {
+  const providers = llmProviders({
+    secrets: {
+      nvidia_api_key: "n",
+      groq_api_key: "g",
+      openai_api_key: "o",
+    },
+  });
+  assert.deepEqual(
+    providers.map((p) => p.id),
+    ["groq", "nvidia", "openai"]
+  );
+});
 
 test("NIM request streams and caps reasoning so apply does not hang", () => {
   const body = chatRequestBody("sys", "user", {

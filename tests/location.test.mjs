@@ -8,22 +8,22 @@ import {
 } from "../lib/location.mjs";
 
 const candidate = {
-  location: "Plano, TX",
+  location: "Austin, TX",
   country_of_residence: "United States",
 };
 
 test("Greenhouse location search is city, state, United States", () => {
-  assert.deepEqual(parseCandidateLocation("Plano, TX"), {
-    city: "Plano",
+  assert.deepEqual(parseCandidateLocation("Austin, TX"), {
+    city: "Austin",
     state: "Texas",
     country: "United States",
   });
-  assert.equal(greenhouseLocationQuery(candidate), "Plano, Texas, United States");
+  assert.equal(greenhouseLocationQuery(candidate), "Austin, Texas, United States");
 });
 
 test("Greenhouse jobs in the US or remote US pass the location gate", () => {
   assert.equal(greenhouseJobMatchesUsSearch({ location: "US-Remote, Chicago, Seattle" }, candidate), true);
-  assert.equal(greenhouseJobMatchesUsSearch({ location: "Plano, TX" }, candidate), true);
+  assert.equal(greenhouseJobMatchesUsSearch({ location: "Austin, TX" }, candidate), true);
   assert.equal(greenhouseJobMatchesUsSearch({ location: "United States" }, candidate), true);
   assert.equal(greenhouseJobMatchesUsSearch({ location: "" }, candidate), true);
 });
@@ -36,7 +36,7 @@ test("Greenhouse jobs locked outside the US fail the location gate", () => {
 
 test("Agent 2 stamps the Greenhouse search string on the job", () => {
   const tagged = applyGreenhouseLocation({ location: "US-Remote", ats: "greenhouse" }, candidate);
-  assert.equal(tagged.greenhouse_location, "Plano, Texas, United States");
+  assert.equal(tagged.greenhouse_location, "Austin, Texas, United States");
   assert.equal(tagged.greenhouse_location_ok, true);
 });
 

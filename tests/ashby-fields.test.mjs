@@ -97,7 +97,7 @@ test("classifyAshbyField: date and checkbox groups (OpenAI)", () => {
 test("autocomplete tries never seed long work_location_intent first", () => {
   const tries = ashbyAutocompleteTries(
     "What location do you intend to work from?",
-    "Plano, TX / United States (remote OK)"
+    "Austin, TX / United States (remote OK)"
   );
   assert.equal(tries[0], "United States");
   assert.ok(!tries[0].includes("/"));

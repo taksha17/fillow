@@ -26,8 +26,8 @@ test("workday posting: maps CXS rows to fillow jobs", () => {
   const job = mapWorkdayPosting(
     {
       title: "Sr. Analyst - Vehicle Planning",
-      externalPath: "/job/Plano-Texas/Sr-Analyst---Vehicle-Planning_10333276-1",
-      locationsText: "Plano, Texas",
+      externalPath: "/job/Austin-Texas/Sr-Analyst---Vehicle-Planning_10333276-1",
+      locationsText: "Austin, Texas",
       postedOn: "Posted Today",
       bulletFields: ["10333276"],
     },
@@ -37,7 +37,7 @@ test("workday posting: maps CXS rows to fillow jobs", () => {
   assert.equal(job.external_id, "workday:10333276");
   assert.equal(job.company, "Toyota");
   assert.equal(job.ats, "workday");
-  assert.equal(job.url, "https://toyota.wd503.myworkdayjobs.com/job/Plano-Texas/Sr-Analyst---Vehicle-Planning_10333276-1");
+  assert.equal(job.url, "https://toyota.wd503.myworkdayjobs.com/job/Austin-Texas/Sr-Analyst---Vehicle-Planning_10333276-1");
   assert.equal(job.posted, "Posted Today");
 });
 

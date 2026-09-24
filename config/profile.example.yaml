@@ -19,10 +19,10 @@ candidate:
   resume_path: resume.pdf
   passport_country: "United States"
   country_of_residence: "United States"
-  school: ""              # e.g. The University of Texas at Arlington
+  school: ""              # e.g. The University of Texas at Austin
   school_aliases: []      # extra spellings the ATS school typeahead might use; last fallback is Other
   degree: ""              # e.g. Master of Science in Computer Science
-  school_location: ""     # e.g. Arlington, TX
+  school_location: ""     # e.g. Austin, TX
   graduation: ""          # e.g. May 2024
   gender: ""              # Male / Female / blank = decline
   hispanic: ""            # Yes / No / blank = decline
@@ -66,8 +66,13 @@ answer_preferences:
     - office 3 days
     - willing to relocate
   always_no:
-    - previously employed by
+    # Generic — no per-company rows needed (see isGenericCompanyAssociationNo)
+    - previously employed
+    - previous employee
+    - former employee
     - relative working
+    - family member
+    - commercial partners
     - restrict your ability
   # Optional curated screening (salary / export-control) — see profile.yaml
   # salary_range: "$120,000–$149,999"
@@ -107,6 +112,7 @@ skip_aggregators: true
 ai:
   provider: nvidia_nim
   model: nvidia/nemotron-3.5-lightning-30b-a3b
+  groq_model: openai/gpt-oss-120b
   max_tokens: 4096
   temperature: 0.3
   timeout_ms: 180000          # apply used to abort NIM at 25s

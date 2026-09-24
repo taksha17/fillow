@@ -132,10 +132,11 @@ export async function applyJobs(jobs, cfg = loadConfig(), opts = {}) {
             dryRun: !(cfg.runtime.auto_submit && !cfg.runtime.review_mode),
             resumePath: resumePath && existsSync(resumePath) ? resumePath : null,
             llmChat,
+            uploadResume: false,
           });
           results.push(result(job, out.status, out.notes, {
             url: out.url,
-            pdf: resumePath && existsSync(resumePath) ? "✅" : "—",
+            pdf: "—",
           }));
           if (emit) emit("item.done", { phase: "apply", job_id: id, result: { status: out.status, notes: out.notes } });
         } catch (err) {

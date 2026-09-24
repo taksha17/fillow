@@ -13,7 +13,7 @@ import { readJobs, updateJobStatus } from "../lib/jobs-tsv.mjs";
 import { isBlacklisted } from "../lib/blacklist.mjs";
 import { withSession, pause } from "../lib/bsk.mjs";
 import { applyMyGreenhouseJob, seedCommonQaBank, mghCanonicalUrl } from "../lib/mygreenhouse.mjs";
-import { resolveResumePath, generateSinglePdf } from "../lib/resume-pdf.mjs";
+import { resolveResumePath } from "../lib/resume-pdf.mjs";
 import { ensureJobDescription } from "../lib/ats.mjs";
 import { analyzeJD } from "../lib/jd-analyze.mjs";
 import { makeLlmChat } from "../lib/llm.mjs";
@@ -82,17 +82,11 @@ export async function applyMyGreenhouse(jobs, cfg = loadConfig()) {
           }
         }
         let resumePath = resolveResumePath(job, cfg);
-        if (!resumePath || !existsSync(resumePath)) {
-          try {
-            resumePath = await generateSinglePdf(cfg, job, { force: true });
-          } catch (err) {
-            console.warn(`  PDF skipped: ${err.message}`);
-          }
-        }
         const out = await applyMyGreenhouseJob(sessionId, job, cfg, {
           dryRun: cfg.runtime.dry_run,
           resumePath,
           llmChat,
+          uploadResume: false,
         });
         const finalUrl = mghCanonicalUrl(job) || canon || out.url;
         results.push({
@@ -103,7 +97,7 @@ export async function applyMyGreenhouse(jobs, cfg = loadConfig()) {
           status: out.status,
           notes: out.notes,
           url: finalUrl,
-          pdf: resumePath && existsSync(resumePath) ? "✅" : "❌",
+          pdf: "—",
           ats: "mygreenhouse",
         });
         if (job.external_id) {

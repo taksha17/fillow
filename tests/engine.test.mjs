@@ -41,6 +41,47 @@ test("always_yes / always_no force lists", () => {
   assert.equal(heuristicAnswer("Were you previously employed by this company?", candidate, {}, prefs), "No");
 });
 
+test("generic company-association questions are No without per-company bank/profile", () => {
+  const yn = ["Yes", "No"];
+  assert.equal(
+    heuristicAnswer("Have you been a previous employee at Blend?", candidate, { company: "blend" }, prefs, yn),
+    "No"
+  );
+  assert.equal(
+    heuristicAnswer("Have you ever been employed by WorldQuant?", candidate, { company: "worldquant" }, prefs, yn),
+    "No"
+  );
+  assert.equal(
+    heuristicAnswer("Are you related to a current employee-owner of CFD Research?", candidate, {}, prefs, yn),
+    "No"
+  );
+  assert.equal(
+    heuristicAnswer(
+      "Do you have any relatives or family members currently employed at Torc Robotics?",
+      candidate,
+      {},
+      prefs,
+      yn
+    ),
+    "No"
+  );
+  assert.equal(
+    heuristicAnswer(
+      "Do you or any of your immediate family members or close personal friends work for a government agency or significant commercial partners of Blend Labs?",
+      candidate,
+      {},
+      prefs,
+      yn
+    ),
+    "No"
+  );
+  // Must not hijack current-employer free text
+  assert.equal(
+    heuristicAnswer("Who is your current or previous employer?", candidate, {}, prefs),
+    "Example LLC"
+  );
+});
+
 test("without-sponsorship auth is No when requires_sponsorship", () => {
   assert.equal(
     heuristicAnswer(
@@ -55,7 +96,7 @@ test("without-sponsorship auth is No when requires_sponsorship", () => {
 });
 
 test("state / years / SF office heuristics", () => {
-  const c = { ...candidate, location: "Plano, TX" };
+  const c = { ...candidate, location: "Austin, TX" };
   assert.match(
     heuristicAnswer("State you will be working from", c, {}, prefs),
     /Texas|TX/i
@@ -319,8 +360,8 @@ test("qa-bank answers Anthropic / China / clearance stuck patterns", () => {
 });
 
 test("zip_code and employer title from profile", () => {
-  const c = { ...candidate, zip_code: "75075", location: "Plano, TX", current_title: "Applied AI Engineer" };
-  assert.equal(heuristicAnswer("Zip Code / Postal Code", c, {}, prefs), "75075");
+  const c = { ...candidate, zip_code: "78701", location: "Austin, TX", current_title: "Applied AI Engineer" };
+  assert.equal(heuristicAnswer("Zip Code / Postal Code", c, {}, prefs), "78701");
   assert.equal(heuristicAnswer("Who is your current or most recent employer?", c, {}, prefs), "Example LLC");
   assert.equal(heuristicAnswer("What is your current or more recent job title?", c, {}, prefs), "Applied AI Engineer");
 });
